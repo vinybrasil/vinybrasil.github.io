@@ -82,10 +82,10 @@ analytics:
 author:
   name             : "Vinícyus Brasil"
   avatar           : "profile.jpg"
-  bio              : "Undergraduate student of Economics at the Federal University of Paraná (UFPR)"
-  location         : "Curitiba, PR - Brazil"
-  employer         : "Federal University of Paraná (UFPR)"
-  cv               : "True"
+  bio              : "Mestrando em Métodos Numéricos em Engenharia na Universidade Federal do Paraná (UFPR)"
+  location         : "Curitiba, PR - Brasil"
+  employer         : "UFPR"
+  cv               : #"True"
   pubmed           : #"https://www.ncbi.nlm.nih.gov/pubmed/?term=john+snow"
   googlescholar    : #"http://yourfullgooglescholarurl.com"
   email            : vinicyusbrasil1@hotmail.com
@@ -104,7 +104,7 @@ author:
   impactstory      : #"https://profiles.impactstory.org/u/xxxx-xxxx-xxxx-xxxx"
   lastfm           :
   lattes           : "http://lattes.cnpq.br/5855510814604914"
-  linkedin         : "vinicyus-brasil-a6b321129"
+  linkedin         : "vinícyus-brasil-a6b321129"
   orcid            : #"http://orcid.org/yourorcidurl"
   pinterest        :
   soundcloud       :

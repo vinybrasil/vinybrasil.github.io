@@ -24,3 +24,12 @@ tem que colocar o gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw]
 no gemfile pra rodar
 
 exemplo: https://stuartgeiger.com/
+
+==========
+Go to this folder C:\Ruby24-x64\lib\ruby\gems\2.4.0\gems\eventmachine-1.2.5-x64-mingw32\lib
+
+open this file eventmachine.rb
+write this require 'em/pure_ruby'
+
+
+bundle add webrick
