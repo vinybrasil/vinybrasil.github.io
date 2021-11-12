@@ -14,3 +14,9 @@
 .container .content {
     display: none;
     padding : 5px;
+}
+
+body {
+   transform: scale(1.1);
+   transform-origin: 0 0;
+}

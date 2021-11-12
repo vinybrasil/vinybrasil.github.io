@@ -33,3 +33,5 @@ write this require 'em/pure_ruby'
 
 
 bundle add webrick
+
+TIRA O <!-- --> do _includes/footer/custom.html pra colocar o sitemap
