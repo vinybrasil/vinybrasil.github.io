@@ -35,3 +35,5 @@ write this require 'em/pure_ruby'
 bundle add webrick
 
 TIRA O <!-- --> do _includes/footer/custom.html pra colocar o sitemap
+
+If you name the file .md, it will be parsed as markdown. If you name the file .html, it will be parsed as HTML. 

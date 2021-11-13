@@ -16,4 +16,4 @@ I got two main focuses on my research: Macroeconomical simulations and quantitat
 
 This website
 ======
-You can read more about my research [here](/research/). About fisinhed projects you can check the [projects](/projects/) tab. My complete CV in the PDF form is [here](/cv/) and some reflections are on the [blog](/year-archive/) area. 
+You can read more about my research [here](/research/). About fisinhed projects you can check the [projects](/projects/) tab and my complete CV is [here](/cv/).
