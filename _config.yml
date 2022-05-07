@@ -82,9 +82,10 @@ analytics:
 author:
   name             : "Vinícyus Brasil"
   avatar           : "profile.jpg"
-  bio              : "Mestrando em Métodos Numéricos em Engenharia na Universidade Federal do Paraná (UFPR)"
+  bio              : "Mestrando em Métodos Numéricos em Engenharia na Universidade Federal do Paraná (UFPR) e Cientista de dados no Banco Bari"
   location         : "Curitiba, PR - Brasil"
-  employer         : "UFPR"
+  uni         : "UFPR"
+  employer         : "Banco Bari"
   cv               : #"True"
   pubmed           : #"https://www.ncbi.nlm.nih.gov/pubmed/?term=john+snow"
   googlescholar    : #"http://yourfullgooglescholarurl.com"
@@ -279,6 +280,8 @@ sass:
   sass_dir: _sass
   style: compressed # http://sass-lang.com/documentation/file.SASS_REFERENCE.html#output_style
 
+lang: en 
+languages: ["en", "pt"] 
 
 # Outputting
 permalink: /:categories/:title/
