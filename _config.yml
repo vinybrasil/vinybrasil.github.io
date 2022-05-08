@@ -7,6 +7,7 @@
 
 # Site Settings
 locale                   : "en-US"
+active_lang              : 
 #locale                   : "pt-BR"
 title                    : "Home"
 title_separator          : "-"
@@ -156,7 +157,6 @@ keep_files:
   - .svn
 encoding: "utf-8"
 markdown_ext: "markdown,mkdown,mkdn,mkd,md"
-
 
 # Conversion
 markdown: kramdown

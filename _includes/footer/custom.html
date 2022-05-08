@@ -66,10 +66,49 @@
 </ul>
 
 -->
-
+<!--
 <ul>
     
-    <li><a href="/about" class="{{ post.lang }}" title="View in {{post.lang}}">{{ site.locale }}</a></li>
-    <li><a href="/sobre" class="{{ post.lang }}" title="View in {{post.lang}}">{{ site.locale }}</a></li>
+    <li><a href="{{page.permalink}}" class="{{ page.lang }}" title="View in {{page.lang}}">{{page.lang}} {{ site.locale }} {{page.title}}</a></li>
+    <li><a href="/pt{{page.permalink}}" class="{{ page.lang }}" title="View in {{page.lang}}">{{page.lang}} {{ site.locale }} {{page.title}}</a></li>
     
+</ul>
+-->
+
+<ul>
+    <!--
+    {{ page.permalink | jsonify }}
+    {{ "Liquid" | slice: 2, 5 }}
+    {% assign a =  {page.permalink}  %}
+    {{ a | jsonify }}
+    {{ page.url | jsonify }}
+    {{ page.url | slice: 0, 4 }}
+    {% assign a =  page.url | slice: 0, 4 %}
+
+    {{ a | jsonify }}
+
+    {{ a | jsonify }}
+
+    {% assign b =  {page.url | split: "/"}  %}
+    {{ b[1] | jsonify }}
+    -->
+    {% assign a =  page.url | slice: 0, 4 %}
+    {% if a != "/pt/" %}
+    <li display="inline" float="left"><a href="{{page.permalink}}" class="{{ page.lang }}">🇺🇸</a></li>
+    <li display="inline"  float="left"><a href="/pt{{page.permalink}}" class="{{ page.lang }}">🇧🇷</a></li>
+    {% else %}
+    {% assign c =  {page.url | split: "/"}  %}
+    <li><a href="/{{c[2]}}" class="{{ page.lang }}">🇺🇸</a></li>
+    <li><a href="{{page.url}}" class="{{ page.lang }}">🇧🇷</a></li>
+    {% endif %}
+
+    <!--
+    {% for lang in site.languages %}
+        {{ lang | jsonify }}
+        {{ site.default_lang | jsonify }}
+    {% endfor %}
+
+    {% assign active_lang = "pt" %}
+    {{ active_lang | jsonify }}
+    -->
 </ul>

@@ -1,7 +1,7 @@
 ---
 permalink: /pt/
 title: "Sobre"
-lang: en
+lang: pt
 excerpt: "Sobre mim"
 author_profile: true
 redirect_from: 
