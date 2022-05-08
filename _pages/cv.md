@@ -11,8 +11,8 @@ redirect_from:
 
 Education
 ======
-* Mestrando em Métodos Numéricos em Engenharia, UFPR, 2023 (término esperado).
-* Bacharelado em Ciências Econômicas, UFPR, 2021.
+* Master's in Numerical Methods in Engineering, UFPR, 2023 (expected finish date).
+* Bachalor's degree in Economics, UFPR, 2021.
 
 Work experience
 ======
@@ -20,7 +20,7 @@ Work experience
   * <em>Secretaria Municipal de Finanças da Prefeitura de Curitiba</em>
   * Duties included: Helping tax payers to solve problems with municipal taxes
 
-* 2020 - 2020: Research Student
+* mar/2020 - dec/2020: Research Student
   * <em>CiDAMO</em> (UFPR) group
   * Duties included: Applying machine learning models to solve real world problems
   * Supervisor: Professor Abel Siqueira and Professor Lucas Pedroso (UFPR)

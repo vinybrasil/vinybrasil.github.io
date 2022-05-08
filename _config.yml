@@ -7,6 +7,7 @@
 
 # Site Settings
 locale                   : "en-US"
+#locale                   : "pt-BR"
 title                    : "Home"
 title_separator          : "-"
 name                     : &name "Vinícyus A. Brasil"
@@ -125,6 +126,7 @@ include:
   - .htaccess
   - _pages
   - files
+  - pt
 exclude:
   - "*.sublime-project"
   - "*.sublime-workspace"
@@ -280,8 +282,6 @@ sass:
   sass_dir: _sass
   style: compressed # http://sass-lang.com/documentation/file.SASS_REFERENCE.html#output_style
 
-lang: en 
-languages: ["en", "pt"] 
 
 # Outputting
 permalink: /:categories/:title/

@@ -36,3 +36,11 @@
 <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/latest.js?config=TeX-MML-AM_CHTML' async></script>
 
 <!-- end custom head snippets -->
+
+{% assign posts=site.pages | where:"lang", page.lang %}
+<ul>
+{% for post in posts %}
+<!-- <li><a rel="alternate" href="{{ site.base-url }}{{ post.url }}" class="{{ post.lang }}" title="View in {{post.lang}}">{{ post.lang }}</a></li> -->
+  <link rel="alternate" hreflang="{{post.lang}}" href="{{ site.base-url }}{{ post.url }}" />
+{% endfor %}
+</ul>

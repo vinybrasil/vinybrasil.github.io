@@ -1,6 +1,7 @@
 ---
 permalink: /pt/
 title: "Sobre"
+lang: en
 excerpt: "Sobre mim"
 author_profile: true
 redirect_from: 
@@ -8,7 +9,7 @@ redirect_from:
   - /sobre.html
 ---
 
-Olá, sou Vinícyus Brasil, estudante de mestrado em Métodos Numéricos em Engenharia na Universidade Federal do Paraná e cientista de dados no Banco Bari. Este é um espaço onde compartilho conteúdos sobre minha pesquisa e sobre aprendizado de máquina, desde a análise dos dados, modelagem e o deploy e monitoramento de modelos. 
+Olá, sou Vinícyus Brasil, estudante de mestrado em Métodos Numéricos em Engenharia na Universidade Federal do Paraná e cientista de dados no Banco Bari. Este é um espaço onde compartilho conteúdos sobre minha pesquisa e sobre <em>Machine Learning</em>, desde a análise dos dados, modelagem e o deploy e monitoramento de modelos. 
 
 Meu trabalho
 ======

@@ -1,7 +1,7 @@
 ---
 permalink: /
 title: "About"
-lang: en
+lang: pt
 excerpt: "About me"
 author_profile: true
 redirect_from: 
@@ -9,7 +9,7 @@ redirect_from:
   - /about.html
 ---
 
-Hi! I'm Vinícyus Brasil, an undergraduate student of Economics at the Federal University of Paraná (UFPR - Universidade Federal do Paraná, in portuguese) located in Curitiba, capital of the State of Paraná, Brazil. I'm focused in learning about mathematical and computational economics, as long as quantitave models to better predict data. I try to solve every problem with a mathematical models and data analysis, always with a background in the scientific literature. 
+Hi! I'm Vinícyus PTTT Brasil, an undergraduate student of Economics at the Federal University of Paraná (UFPR - Universidade Federal do Paraná, in portuguese) located in Curitiba, capital of the State of Paraná, Brazil. I'm focused in learning about mathematical and computational economics, as long as quantitave models to better predict data. I try to solve every problem with a mathematical models and data analysis, always with a background in the scientific literature. 
 
 My work and research
 ======
