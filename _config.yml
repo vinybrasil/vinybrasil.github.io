@@ -7,7 +7,6 @@
 
 # Site Settings
 locale                   : "en-US"
-active_lang              : 
 #locale                   : "pt-BR"
 title                    : "Home"
 title_separator          : "-"

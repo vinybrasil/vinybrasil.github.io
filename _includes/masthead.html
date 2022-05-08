@@ -29,7 +29,10 @@
           <li class="masthead__menu-item" ><a href="/{{c[2]}}" class="{{ page.lang }}">🇺🇸</a></li>
           <li class="masthead__menu-item" ><a href="{{page.url}}" class="{{ page.lang }}">🇧🇷</a></li>
           {% endif %}
-
+          {{ site.active_lang | jsonify }}
+          {{ $active_lang | jsonify }}
+          {{ &active_lang | jsonify }}
+          {{ *active_lang | jsonify }}
         </ul>
         <ul class="hidden-links hidden"></ul>
       </nav>

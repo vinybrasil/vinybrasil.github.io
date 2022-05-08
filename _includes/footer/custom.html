@@ -92,16 +92,20 @@
     {% assign b =  {page.url | split: "/"}  %}
     {{ b[1] | jsonify }}
     -->
+
     {% assign a =  page.url | slice: 0, 4 %}
     {% if a != "/pt/" %}
-    <li display="inline" float="left"><a href="{{page.permalink}}" class="{{ page.lang }}">🇺🇸</a></li>
-    <li display="inline"  float="left"><a href="/pt{{page.permalink}}" class="{{ page.lang }}">🇧🇷</a></li>
+
+        <li display="inline" float="left"><a href="{{page.permalink}}" class="{{ page.lang }}">🇺🇸</a></li>
+        <li display="inline"  float="left"><a href="/pt{{page.permalink}}" class="{{ page.lang }}">🇧🇷</a></li>
     {% else %}
-    {% assign c =  {page.url | split: "/"}  %}
-    <li><a href="/{{c[2]}}" class="{{ page.lang }}">🇺🇸</a></li>
-    <li><a href="{{page.url}}" class="{{ page.lang }}">🇧🇷</a></li>
+
+        {% assign c =  {page.url | split: "/"}  %}
+        <li><a href="/{{c[2]}}" class="{{ page.lang }}">🇺🇸</a></li>
+        <li><a href="{{page.url}}" class="{{ page.lang }}">🇧🇷</a></li>
     {% endif %}
 
+    {% assign $active_lang = "en"  %}
     <!--
     {% for lang in site.languages %}
         {{ lang | jsonify }}
@@ -111,4 +115,12 @@
     {% assign active_lang = "pt" %}
     {{ active_lang | jsonify }}
     -->
-</ul>
+
+        <!--
+        {% assign $active_lang = "en"  %}
+        {{ $active_lang | jsonify }} -->
+
+            <!--
+        {% assign site.active_lang = "pt"  %}
+        {{ active_lang | jsonify }}
+    -->
