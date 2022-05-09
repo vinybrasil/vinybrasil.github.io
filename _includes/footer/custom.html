@@ -94,9 +94,9 @@
     -->
 
     {% assign a =  page.url | slice: 0, 4 %}
-    {% if a != "/pt/" %}
+    {% if a != "/en/" %}
 
-    <strong >Read this page in another language: </strong> <a href="{{page.permalink}}" class="{{ page.lang }}">🇧🇷</a> <a href="/pt{{page.permalink}}" class="{{ page.lang }}">🇺🇸</a> 
+    <strong >Read this page in another language: </strong> <a href="{{page.permalink}}" class="{{ page.lang }}">🇧🇷</a> <a href="/en{{page.permalink}}" class="{{ page.lang }}">🇺🇸</a> 
 
     {% else %}
 
