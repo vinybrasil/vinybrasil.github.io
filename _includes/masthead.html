@@ -1,4 +1,5 @@
 {% include base_path %}
+{% include active_lang %}
 
 <div class="masthead">
   <div class="masthead__inner-wrap">
@@ -29,10 +30,17 @@
           <li class="masthead__menu-item" ><a href="/{{c[2]}}" class="{{ page.lang }}">🇺🇸</a></li>
           <li class="masthead__menu-item" ><a href="{{page.url}}" class="{{ page.lang }}">🇧🇷</a></li>
           {% endif %}
+          <!--
           {{ site.active_lang | jsonify }}
           {{ $active_lang | jsonify }}
           {{ &active_lang | jsonify }}
           {{ *active_lang | jsonify }}
+          {{ active_lang | jsonify }}
+          {% assign active_lang = "pt"  %}
+          {{ active_lang | jsonify }}
+          {{ base_path | jsonify }}
+
+          -->
         </ul>
         <ul class="hidden-links hidden"></ul>
       </nav>
