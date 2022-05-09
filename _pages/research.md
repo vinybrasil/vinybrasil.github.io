@@ -1,6 +1,6 @@
 ---
 layout: archive
-title: "Research"
+title: "Pesquisa"
 permalink: /research/
 author_profile: true
 redirect_from:
@@ -9,10 +9,12 @@ redirect_from:
 
 {% include base_path %}
 
-Macroeconomic simulations 
+Machine Learning
 ======
-For my Bachalor's Thesis I'm studying the Dornbusch Model. The paper was published in 1976 and it's the most important paper of the author, as long as a important subject in the study of macrointernational economics. It shows, using differential equations and matrix algebra, how the exchange rate depreceates more in the short run than it should accordantly to the exchange rate of equilibrium of the long run. The event is a consequence of the use of the hypothesys of the perfect foresight and the sticky prices. There's no clear evidence of that effect in real life mainly because there are many factors that changes the exchange rate, but the effect, known as "overshooting", can be used to help policy makers to understand the effects of a monetary expansion. My work in the model is to implement it in Matlab and, using real data from Brazil, simulate an monetary expansion. The effects will be described and analysed.
- 
-Econometric applications (Machine learning)
+No mestrado estou atualmente estudando regressão multidimensional com máquinas de vetores suporte. Ao contrário dos problemas de regressão convencionais, onde a entrada do modelo
+é um vetor e o mesmo tem como saída um escalar, nos problemas de regressão multidimensional a saída é também um vetor, de dimensão igual ou diferente da dimensão do vetor de entrada. Tais tipos de modelos podem ser usados para estimar séries temporais conjuntamente e/ou vários dias de uma mesma série. O orientador é o professor Anderson Ara da UFPR. Trabalhei também com o uso de redes neurais para melhorar a previsão das séries temporais e o uso de séries temporais em redes bayesianas.
+
+
+Simulações macroeconômicas
 ======
-(soon will be updated)
+No meu TCC simulei computacionalmente o modelo macroeconômico Mundell-Fleming-Dornbusch, onde o mesmo busca estimar o impacto de políticas monetárias na taxa de inflação e na taxa de câmbio. Tais simulações são importantes dado que, de acordo com as características do país, tais efeitos tem magnitudes muito diferentes. 
