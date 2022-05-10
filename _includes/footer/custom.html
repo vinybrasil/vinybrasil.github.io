@@ -101,7 +101,7 @@
     {% else %}
 
         {% assign c =  {page.url | split: "/"}  %}
-        <strong>Read this page in another language: </strong> <a href="/{{c[2]}}" class="{{ page.lang }}">🇧🇷</a><a href="{{page.url}}" class="{{ page.lang }}">🇺🇸🇧🇷</a>
+        <strong>Read this page in another language: </strong> <a href="/{{c[2]}}" class="{{ page.lang }}">🇧🇷</a> <a href="{{page.url}}" class="{{ page.lang }}">🇺🇸</a>
         
     {% endif %}
 
