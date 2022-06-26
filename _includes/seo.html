@@ -42,6 +42,7 @@
 <meta property="og:locale" content="{{ site.locale | default: "en" }}">
 <meta property="og:site_name" content="{{ site.title }}">
 <!-- <meta prefix="og: http://ogp.me/ns#" property='og:image' content='https://vinybrasil.github.io/images/kafkafastapiasync500x300.png'/> -->
+<meta prefix="og: http://ogp.me/ns#" property='og:image' content="{{ base_path }}{{ page.og_image }}" />
 <meta property="og:title" content="{{ page.title | default: site.title | markdownify | strip_html | strip_newlines | escape_once }}">
 
 {% if seo_url %}
