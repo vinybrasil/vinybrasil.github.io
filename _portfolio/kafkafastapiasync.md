@@ -55,3 +55,5 @@ That's it. Feel free to ask any questions or to contribute in the github reposit
 
 [2] iwpnd. Apache Kafka producer and consumer with FastAPI and aiokafka. Available at https://iwpnd.pw/articles/2020-03/apache-kafka-fastapi-geostream
 
+/images/kafkafastapiasync500x300.png'
+![logo](/images/kafkafastapiasync500x300.png "logo")
