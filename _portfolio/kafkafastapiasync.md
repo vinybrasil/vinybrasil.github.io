@@ -2,8 +2,9 @@
 title: "A asynchronous Consumer and Producer API for Kafka with FastAPI in Python"
 excerpt: "Create a simple asynchronous API that works the same time as a Kafka's producer and consumer with Python's FastAPI library<br/><img src='/images/kafkafastapiasync500x300.png'>"
 collection: API
+og_image: '/images/kafkafastapiasync500x300.png'
 ---
-<meta property='og:image' content='//images/kafkafastapiasync500x300.png/'/>
+
 
 Writing asynchronous code might be a little hard the first time you do it, mainly if you're trying to do it as you're working with some other difficult library like Kafka. Altough it's difficult, it's worth the effort when you're dealing with a high load or multiple microservices that can take some time to answer your calls. <br>
 The porpuse of this article is to create a simple asynchronous API that works the same time as a Kafka's producer and consumer. The full project it's on my [Github](https://github.com/vinybrasil/fastapi_kafka). 
