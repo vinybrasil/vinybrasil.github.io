@@ -46,7 +46,7 @@ It should return something like this:
 ![Result from the API call as the client](/images/kafkafastapiasyncfig1.png "Result from the API call as the client")
 In the server terminal, the results should look like:
 ![Result from the API call in the server](/images/kafkafastapiasyncfig2.png "Result from the API call in the server")
-
+![logo](/images/kafkafastapiasync500x300.png "logo")
 That's it. Feel free to ask any questions or to contribute in the github repository or in my personal email.
 
 # References
@@ -55,5 +55,4 @@ That's it. Feel free to ask any questions or to contribute in the github reposit
 
 [2] iwpnd. Apache Kafka producer and consumer with FastAPI and aiokafka. Available at https://iwpnd.pw/articles/2020-03/apache-kafka-fastapi-geostream
 
-/images/kafkafastapiasync500x300.png'
 ![logo](/images/kafkafastapiasync500x300.png "logo")
