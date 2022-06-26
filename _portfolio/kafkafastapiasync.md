@@ -42,11 +42,11 @@ And that's it for the API. We can start it using uvicorn:
 <script src="https://gist.github.com/vinybrasil/ef37f1eb9639ff4bab08162e247170d5.js"></script>
 We can also test it using cURL:
 <script src="https://gist.github.com/vinybrasil/ee558010f91b4fe41c7646111ac8e879.js"></script>
+![logo](/images/kafkafastapiasync500x300.png "logo")
 It should return something like this:
 ![Result from the API call as the client](/images/kafkafastapiasyncfig1.png "Result from the API call as the client")
 In the server terminal, the results should look like:
 ![Result from the API call in the server](/images/kafkafastapiasyncfig2.png "Result from the API call in the server")
-![logo](/images/kafkafastapiasync500x300.png "logo")
 That's it. Feel free to ask any questions or to contribute in the github repository or in my personal email.
 
 # References
@@ -54,5 +54,3 @@ That's it. Feel free to ask any questions or to contribute in the github reposit
 [1] Shuyi Yang. Apache Kafka: Docker Container and examples in Python. Available at https://towardsdatascience.com/kafka-docker-python-408baf0e1088
 
 [2] iwpnd. Apache Kafka producer and consumer with FastAPI and aiokafka. Available at https://iwpnd.pw/articles/2020-03/apache-kafka-fastapi-geostream
-
-![logo](/images/kafkafastapiasync500x300.png "logo")
