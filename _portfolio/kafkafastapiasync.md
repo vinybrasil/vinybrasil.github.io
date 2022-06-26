@@ -3,7 +3,7 @@ title: "A asynchronous Consumer and Producer API for Kafka with FastAPI in Pytho
 excerpt: "Create a simple asynchronous API that works the same time as a Kafka's producer and consumer with Python's FastAPI library<br/><img src='/images/kafkafastapiasync500x300.png'>"
 collection: API
 ---
-<meta property='og:image' content='/images/kafkafastapiasync500x300.png'/>
+<meta property='og:image' content='//vinybrasil.github.io/images/kafkafastapiasync500x300.png/'/>
 
 Writing asynchronous code might be a little hard the first time you do it, mainly if you're trying to do it as you're working with some other difficult library like Kafka. Altough it's difficult, it's worth the effort when you're dealing with a high load or multiple microservices that can take some time to answer your calls. <br>
 The porpuse of this article is to create a simple asynchronous API that works the same time as a Kafka's producer and consumer. The full project it's on my [Github](https://github.com/vinybrasil/fastapi_kafka). 
@@ -43,7 +43,6 @@ And that's it for the API. We can start it using uvicorn:
 <script src="https://gist.github.com/vinybrasil/ef37f1eb9639ff4bab08162e247170d5.js"></script>
 We can also test it using cURL:
 <script src="https://gist.github.com/vinybrasil/ee558010f91b4fe41c7646111ac8e879.js"></script>
-![logo](/images/kafkafastapiasync500x300.png "logo")
 It should return something like this:
 ![Result from the API call as the client](/images/kafkafastapiasyncfig1.png "Result from the API call as the client")
 In the server terminal, the results should look like:
