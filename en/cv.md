@@ -24,8 +24,9 @@ Work experience
  
 Skills
 ======
-* Data analysis with Python and R
-  * Machine learning and econometric models
-* Mathematical modelling with Octave and Matlab
-* Exploratory data analysis with Excel, PowerBI and Tableau
+* Data analysis with Python, R and MATLAB
+* Machine learning and econometric models
+* Linux, Git;
+* CI/CD with Jenkins;
+* Docker, Kubernetes
 * Professional English

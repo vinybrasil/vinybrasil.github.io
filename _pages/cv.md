@@ -9,26 +9,30 @@ redirect_from:
 
 {% include base_path %}
 
-Education
+Experiência acadêmica
 ======
-* Master's in Numerical Methods in Engineering, UFPR, 2023 (expected finish date).
-* Bachalor's degree in Economics, UFPR, 2021.
+* Mestrando em Métodos Numéricos em Engenharia, UFPR, 2023 (data de término esperada).
+* Bacharel em Economia, UFPR, 2021.
 
-Work experience
+Experiência profissional
 ======
-* 2018 - 2020: Internship
-  * <em>Secretaria Municipal de Finanças da Prefeitura de Curitiba</em>
-  * Duties included: Helping tax payers to solve problems with municipal taxes
+* dez/2020 - hoje: Cientista de Dados
+  * Instituição: <em>Banco Bari</em>
+  * Tarefas: Auxílio no desenvolvimento e deploy de modelos de Machine Learning. Entre as tecnologias utilizadas, então Python, AWS (DynamoDB), SQL, Docker, Unix, Gitlab e bibliotecas como tensorflow, scikit-learn e scipy, além de pandas, matplotlib e numpy. Dentre os projetos, destacam-se projetos de visão computacional, clusterização e regressão.
 
-* mar/2020 - dec/2020: Research Student
-  * <em>CiDAMO</em> (UFPR) group
-  * Duties included: Applying machine learning models to solve real world problems
-  * Supervisor: Professor Abel Siqueira and Professor Lucas Pedroso (UFPR)
+* mar/2020 - dez/2020: Estudante pesquisador
+  * Instituição: <em>CiDAMO</em> (projeto de extensão da UFPR)
+  * Tarefas: estudo de tópicos relacionados à Machine Learning e Ciência de Dados, sendo que tive participação em três projetos:
+    - NLP;
+    - Otimização de carteiras (Modelo de Markowitz)
+    - Clusterização
+  * Supervisor: Professor Lucas Pedroso (UFPR)
  
 Skills
 ======
-* Data analysis with Python and R
-  * Machine learning and econometric models
-* Mathematical modelling with Octave and Matlab
-* Exploratory data analysis with Excel, PowerBI and Tableau
-* Professional English
+* Python, R, Matlab e C++ para o desenvolvimento de modelos e software relativos à Machine Learning;
+* AWS (Lambda, S3, SageMaker, DynamoDB);
+* Docker, Kubernetes, Jenkins, Kafka;
+* git para versionamento de código;
+* Bancos de dados estruturados e não estruturados e com a linguagem SQL;
+* Inglês profissional;
