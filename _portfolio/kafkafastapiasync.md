@@ -6,8 +6,8 @@ og_image: '/images/kafkafastapiasync500x300.png'
 ---
 
 
-Writing asynchronous code might be a little hard the first time you do it, mainly if you're trying to do it as you're working with some other difficult library like Kafka. Altough it's difficult, it's worth the effort when you're dealing with a high load or multiple microservices that can take some time to answer your calls. <br>
-The porpuse of this article is to create a simple asynchronous API that works the same time as a Kafka's producer and consumer. The full project it's on my [Github](https://github.com/vinybrasil/fastapi_kafka). 
+Writing asynchronous code might be a little hard the first time you do it, mainly if you're trying to do it as you're working with some other difficult library like Kafka. Although it's difficult, it's worth the effort when you're dealing with a high load or multiple microservices that can take some time to answer your calls. <br>
+The purpose of this article is to create a simple asynchronous API that works the same time as a Kafka's producer and consumer. The full project it's on my [Github](https://github.com/vinybrasil/fastapi_kafka). 
 
 
 # Setting up Kafka
@@ -34,9 +34,9 @@ Now, we need to create the FastAPI class and the loop objects.
 <script src="https://gist.github.com/vinybrasil/640b7906e41a59260233c4d7968e06f3.js"></script>
 The loop object will be referenced in the creating of the Producer and the Consumer classes:
 <script src="https://gist.github.com/vinybrasil/8318ea2b98b0e295fe2584f46dc335dd.js"></script>
-For the consumer part, we can create a consume function which has the porpouse of printing the message of the topic (and it's proprieties) in the server terminal everytime a new one arrives.
+For the consumer part, we can create a consume function which has the purpose of printing the message of the topic (and it's proprieties) in the server terminal everytime a new one arrives.
 <script src="https://gist.github.com/vinybrasil/14c21dc9f36824e912509b80dfe970cc.js"></script>
-Now here's the trick for the function of the consumer runs forever: the consume() funcion must be created at the startup of the API. With that, we guaratee that the function is running all the time.
+Now here's the trick for the function of the consumer runs forever: the consume() function must be created at the startup of the API. With that, we guarantee that the function is running all the time.
 <script src="https://gist.github.com/vinybrasil/6d1647fa281687c9bd0110813aa61d22.js"></script>
 We can now create the POST route that will produce the message when someone calls it. Here we got two classes to standardize the input.
 <script src="https://gist.github.com/vinybrasil/aa23381a14eabac560ffeb2ea5fe4e32.js"></script>
