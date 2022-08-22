@@ -59,6 +59,7 @@ We can now save the model using a method of the model class:
 <script src="https://gist.github.com/vinybrasil/e6387e2c114dbc5c66d46e13e8102e6b.js"></script>
 
 It will create a folder and it looks like this
+
 ![Result from the API call in the server](/images/doc_classifier_post/folder.png "Folder of the model")
 
 The full code for training the model can be checked [here](https://github.com/vinybrasil/doc_classifier/blob/main/notebooks/train_document_classifier.ipynb).
