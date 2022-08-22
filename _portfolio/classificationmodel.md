@@ -61,6 +61,7 @@ We can now save the model using a method of the model class:
 It will create a folder and it looks like this
 ![Result from the API call in the server](/images/doc_classifier_post/folder.png "Folder of the model")
 
+The full code for training the model can be checked [here](https://github.com/vinybrasil/doc_classifier/blob/main/notebooks/train_document_classifier.ipynb).
 
 # Creating the API
 To serve the model, we need to create an API and we'll use FastAPI because it's a fast and reliable library. 
