@@ -83,14 +83,14 @@ analytics:
 author:
   name             : "Vinícyus Brasil"
   avatar           : "profile.jpg"
-  bio              : "Msc Student at UFPR | Data Scientist at Banco Bari "
+  bio              : "MSc Student at UFPR | Data Scientist at Banco Bari "
   location         : "Curitiba, PR - Brasil"
   uni         : "UFPR"
   employer         : "Banco Bari"
   cv               : #"True"
   pubmed           : #"https://www.ncbi.nlm.nih.gov/pubmed/?term=john+snow"
   googlescholar    : #"http://yourfullgooglescholarurl.com"
-  email            : vinicyusbrasil1@hotmail.com
+  email            : # vinicyusbrasil1@hotmail.com
   researchgate     :  # example: "https://www.researchgate.net/profile/yourprofile"
   uri              :
   bitbucket        :
