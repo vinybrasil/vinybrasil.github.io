@@ -5,7 +5,7 @@ collection: API
 og_image: '/images/doc550x300_4.png'
 ---
 
-Does the user inserted the correct picture when the app requested? That's a pretty common problem companies faces when creating a onboarding process of a app or a web service. For example, during the onboarding process of a bank the app can ask for a selfie and the user insert a picture of it's ID, for example. Since in those kind of processes there's a huge amount of requests at the same time, a manual validation process can't be used and a machine learning model can be a good alternative. TensorFlow and FastAPI can be used to create that solution.
+Does the user inserted the correct picture when the app requested? That's a pretty common problem companies faces when creating a onboarding process of a app or a web service. For example, during the onboarding process of a bank the app can ask for a selfie and the user insert a picture of it's ID. Since in those kind of processes there's a huge amount of requests at the same time, a manual validation process can't be used and a machine learning model can be a good alternative. TensorFlow and FastAPI can be used to create that solution.
 
 We need also to deploy the model on the cloud so it can be available to the app. For that, we can use the serverless service AWS Lambda since it has a low cost and we don't need to worry about servers.
 
