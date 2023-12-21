@@ -12,15 +12,28 @@ redirect_from:
 Experiência acadêmica
 ======
 * Mestrando em Métodos Numéricos em Engenharia, UFPR, 2023 (data de término esperada).
-* Bacharel em Economia, UFPR, 2021.
+* Bacharel em Ciências Econômicas, UFPR, 2021.
 
 Experiência profissional
 ======
-* dez/2020 - hoje: Cientista de Dados
+* dez/2020 - hoje: cientista de dados
   * Instituição: <em>Banco Bari</em>
-  * Tarefas: Auxílio no desenvolvimento e deploy de modelos de Machine Learning. Entre as tecnologias utilizadas, então Python, AWS (DynamoDB), SQL, Docker, Unix, Gitlab e bibliotecas como tensorflow, scikit-learn e scipy, além de pandas, matplotlib e numpy. Dentre os projetos, destacam-se projetos de visão computacional, clusterização e regressão.
+  * Tarefas: Desenvolvimento e deploy de modelos de machine learning. 
+  * Tecnologias:
+    * Linguages de programação:
+      * Python
+      * SQL
+      * Go
+      * Javascript
+    * Cloud:
+      * AWS
+      * GCP (BigQuery)
+    * Outros:
+      * Docker
+      * Kubernetes
+      * Gitlab
 
-* mar/2020 - dez/2020: Estudante pesquisador
+* mar/2020 - dez/2020: estudante pesquisador
   * Instituição: <em>CiDAMO</em> (projeto de extensão da UFPR)
   * Tarefas: estudo de tópicos relacionados à Machine Learning e Ciência de Dados, sendo que tive participação em três projetos:
     - NLP;
@@ -30,8 +43,8 @@ Experiência profissional
  
 Skills
 ======
-* Python, R, Matlab e C++ para o desenvolvimento de modelos e software relativos à Machine Learning;
-* AWS (Lambda, S3, SageMaker, DynamoDB);
+* Python, R, Matlab e C++ para o desenvolvimento de modelos e software relativos à machine learning;
+* AWS (Lambda, S3, DynamoDB);
 * Docker, Kubernetes, Jenkins, Kafka;
 * git para versionamento de código;
 * Bancos de dados estruturados e não estruturados e com a linguagem SQL;
