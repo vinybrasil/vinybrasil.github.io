@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head id="head">
+    <meta charset="utf-8">
+    <title id="title">
+      Trigger a AWS Lambda with a SQS message with Python
+      | Viny Brasil's Blog
+    </title>
+    <meta name="description" content="Comunicate your microsservices with a messaging service">
+    <meta name="twitter:description" content="Comunicate your microsservices with a messaging service">
+    <meta name="twitter:title" content="Trigger a AWS Lambda with a SQS message with Python">
+    <meta property="og:title" content="Trigger a AWS Lambda with a SQS message with Python">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://kristoff.it/logo.png">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="/main.css?bust2">
+    <link type="text/css" rel="stylesheet" href="/highlight.css?bust">
+    <link rel="stylesheet" type="text/css" href="/fonts.css">
+    <link rel="stylesheet" type="text/css" href="/fira_code.css">
+    <link rel="stylesheet" type="text/css" href="/style.css">
+    <link rel="stylesheet" type="text/css" href="/highlight.css">
+    
+    <script id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+    
+    <script defer type="text/javascript" src="https://api.pirsch.io/pirsch.js" id="pirschjs" data-code="CnorXJVVDmhCee3FBtXSQISdHIUmqp3o"></script>
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y0TCWKTPYJ"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-Y0TCWKTPYJ');
+    </script>
+    
+  <link type="text/css" rel="stylesheet" href="/term-highlight.css">
+
+  </head>
+  <body>
+    <!-- <nav id="menu" class="centered"> -->
+    <nav>
+
+      <a href="/">Home</a>
+      •
+      <a href="/projects/">Posts</a>
+      •
+      <a href="/research/">Research</a>
+      •
+      <a href="https://linkedin.com/in/vinicyus-brasil" target="_blank">LinkedIn</a>
+      •
+      <a href="https://github.com/vinybrasil" target="_blank">Github</a>
+      
+    </nav>
+    <div id="content">
+      
+  <!-- <div style="display:flex; flex-direction:column; align-items:center;">
+    <h1 id="header"><a class="reset-a" href="/">Loris Cro</a></h1>
+    <small><i>Personal Website</i></small>
+    <div style="display:flex; justify-content:center; font-size:small;">
+      <a href="/">About</a>
+      	&nbsp; • &nbsp;
+      <a href="https://twitter.com/croloris">Twitter</a>
+      	&nbsp; • &nbsp;
+      <a href="https://twitch.tv/kristoff_it">Twitch</a>
+      	&nbsp; • &nbsp;
+      <a href="https://youtube.com/c/ZigSHOWTIME/">YouTube</a>
+      	&nbsp; • &nbsp;
+      <a href="https://github.com/kristoff-it">GitHub</a>
+    </div>
+  </div> -->
+  <h1>Trigger a AWS Lambda with a SQS message with Python</h1>
+  <p class="post-byline">
+    <span>December 03, 2022</span>
+    •
+    <span>7</span>
+    min read • by
+    <b>Vinicyus Brasil</b>
+    <span></span>
+  </p>
+  <div id="post-description">Comunicate your microsservices with a messaging service</div>
+  <div id="post-body"><h2>Introduction</h2><p>In the context of microservices, the communication of them must be fast and realiabe. This communication can be through messages and a tool for this communication can be SQS (Simple Queue Service), a messaging service by AWS.</p><p>This project will be a example of a system that can receive a SQS message from a client, process it, and give the information to another client. As a example of this process, we’ll create a microservice in a AWS Lambda that will act when receive a SQS message. It’ll write the message in a .txt file and return all the messages when receives a HTTP call to a certain endpoint. We’ll be using AWS Lambda because it is a serverless framework, in which the idea is you don’t have to worry about servers.</p><p>Python’s library FastAPI will be used to create the API, Docker to containerize it and Poetry will be the library manager. As always, the <a href="https://github.com/vinybrasil/triggersqs" target="_blank">code of the project is on my Github</a>.</p><h2>Building the API</h2><p>We’ll be using FastAPI as the backend tool for this project. The package has a simple syntax and makes easy to create APIs. To create a health check route:</p><pre><code class="python"><span class="keyword">from</span> <span class="variable">fastapi</span> <span class="keyword">import</span> <span class="variable">FastAPI</span>
+<span class="keyword">import</span> <span class="variable">json</span>
+
+<span class="variable">app</span> <span class="operator">=</span> <span class="function">FastAPI</span>()
+
+<span class="function">@app.get(&quot;/healthcheck&quot;)</span>
+<span class="keyword">def</span> <span class="function">root</span>():
+    <span class="keyword">return</span> {<span class="string">&quot;message&quot;</span>: <span class="string">&quot;health check&quot;</span>}
+</code></pre>
+<p>Calling the file main.py, Uvicorn can run this API by running the following code:</p><pre><code class="python"><span class="keyword">import</span> <span class="variable">uvicorn</span>
+
+<span class="keyword">if</span> <span class="variable">__name__</span> <span class="operator">==</span> <span class="string">&quot;__main__&quot;</span>:
+    <span class="variable">uvicorn</span>.<span class="function method">run</span>(<span class="string">&quot;main:app&quot;</span>, <span class="variable">host</span><span class="operator">=</span><span class="string">&quot;0.0.0.0&quot;</span>, <span class="variable">port</span><span class="operator">=</span><span class="number">8000</span>, <span class="variable">reload</span><span class="operator">=</span><span class="constant builtin">True</span>)
+
+</code></pre>
+<p>Inside the main.py file, we’ll create another route called “/records”. When the API receives a SQS message, it writes it down on a .txt file called “log.txt”. The new route retrives all of the messages in the file. The full “main.py” will be</p><pre><code class="python"><span class="keyword">from</span> <span class="variable">fastapi</span> <span class="keyword">import</span> <span class="variable">FastAPI</span>
+<span class="keyword">import</span> <span class="variable">json</span>
+
+<span class="variable">app</span> <span class="operator">=</span> <span class="function">FastAPI</span>()
+
+<span class="function">@app.get(&quot;/healthcheck&quot;)</span>
+<span class="keyword">def</span> <span class="function">root</span>():
+    <span class="keyword">return</span> {<span class="string">&quot;message&quot;</span>: <span class="string">&quot;health check&quot;</span>}
+
+<span class="function">@app.get(&quot;/records&quot;)</span>
+<span class="keyword">def</span> <span class="function">root</span>():
+    <span class="keyword">try</span>:
+        <span class="keyword">with</span> <span class="function">open</span>(<span class="string">&apos;/tmp/&apos;</span> <span class="operator">+</span>  <span class="string">&quot;log.txt&quot;</span>, <span class="string">&apos;r&apos;</span>) <span class="keyword">as</span> <span class="variable">fp</span>:
+            <span class="variable">line</span> <span class="operator">=</span> <span class="variable">fp</span>.<span class="function method">readlines</span>()
+
+        <span class="variable">lines</span> <span class="operator">=</span> [ <span class="variable">json</span>.<span class="function method">loads</span>(<span class="variable">x</span>.<span class="function method">replace</span>(<span class="string">&quot;\n&quot;</span>, <span class="string">&quot;&quot;</span>).<span class="function method">replace</span>(<span class="string">&quot;&apos;&quot;</span>, <span class="string">&apos;&quot;&apos;</span>)) <span class="keyword">for</span> <span class="variable">x</span> <span class="operator">in</span> <span class="variable">line</span>]
+        <span class="variable">b</span> <span class="operator">=</span> {}
+
+        <span class="keyword">for</span> <span class="variable">i</span> <span class="operator">in</span> <span class="function">range</span>(<span class="function">len</span>(<span class="variable">lines</span>)):
+            <span class="variable">b</span>[<span class="string">f&quot;{i}&quot;</span>] <span class="operator">=</span>  <span class="variable">lines</span>[<span class="variable">i</span>]
+        <span class="keyword">return</span>  {<span class="string">&quot;messages&quot;</span>: <span class="variable">b</span>}
+
+    <span class="keyword">except</span>: <span class="comment">#when there are no messages</span>
+        <span class="keyword">return</span> {<span class="string">&quot;messages&quot;</span>: {}}
+</code></pre>
+<h2>Creating the SQS handler</h2><p>To create the SQS handler, we first need to undestand how our Lambda will receive the SQS message. It will come in a JSON like this</p><pre><code>{
+  &quot;Records&quot;: [
+    {
+      &quot;messageId&quot;: &quot;19dd0b57-b21e-4ac1-bd88-01bbb068cb78&quot;,
+      &quot;receiptHandle&quot;: &quot;MessageReceiptHandle&quot;,
+      &quot;body&quot;: &quot;Hello world&quot;,
+      &quot;attributes&quot;: {
+        &quot;ApproximateReceiveCount&quot;: &quot;1&quot;,
+        &quot;SentTimestamp&quot;: &quot;1523232000000&quot;,
+        &quot;SenderId&quot;: &quot;123456789012&quot;,
+        &quot;ApproximateFirstReceiveTimestamp&quot;: &quot;1523232000001&quot;
+      },
+      &quot;messageAttributes&quot;: {},
+      &quot;md5OfBody&quot;: &quot;{{{md5_of_body}}}&quot;,
+      &quot;eventSource&quot;: &quot;aws:sqs&quot;,
+      &quot;eventSourceARN&quot;: &quot;arn:aws:sqs:us-east-1:123456789012:mysqs&quot;,
+      &quot;awsRegion&quot;: &quot;us-east-1&quot;
+    }
+  ]
+}
+</code></pre><p>There’s a few details here. First of all, the eventSourceARN, which is the address of the SQS Queue. The second is the body of the message. For this example, we want to receive messages in the format of</p><pre><code>{&quot;command&quot;: &quot;SetStatus&quot;, &quot;client_id&quot;: &quot;c79da7ce8e5e&quot;}
+</code></pre><p>A parser must be created to extract the data and put it in a object called Message.</p><pre><code class="python"><span class="keyword">from</span> <span class="variable">pydantic</span> <span class="keyword">import</span> <span class="variable">BaseModel</span>
+<span class="keyword">import</span> <span class="variable">json</span> 
+
+<span class="variable">ARN_SOURCE</span> <span class="operator">=</span> <span class="string">f&apos;arn:aws:sqs:us-east-1:123456789012:triggersqs_Queue&apos;</span>
+
+<span class="keyword">class</span> <span class="variable">Message</span>(<span class="variable">BaseModel</span>):
+    <span class="variable">command</span>: <span class="type">str</span>
+    <span class="variable">client_id</span>: <span class="type">str</span>
+
+<span class="keyword">class</span> <span class="variable">SQSHandler</span>():
+    <span class="keyword">def</span> <span class="function">__init__</span>(<span class="variable">self</span>, <span class="variable">ARN_SOURCE</span>):
+        <span class="variable">self</span>.<span class="property">ARN_SOURCE</span> <span class="operator">=</span> <span class="variable">ARN_SOURCE</span>
+
+    <span class="keyword">def</span> <span class="function">parse_messages</span>(<span class="variable">self</span>, <span class="variable">event</span>):
+        <span class="variable">messages</span> <span class="operator">=</span> [<span class="function">Message</span>(<span class="operator">**</span><span class="variable">json</span>.<span class="function method">loads</span>(<span class="variable">record</span>[<span class="string">&apos;body&apos;</span>])) <span class="keyword">for</span> <span class="variable">record</span> <span class="operator">in</span> <span class="variable">event</span>.<span class="function method">get</span>(<span class="string">&quot;Records&quot;</span>, []) <span class="keyword">if</span> <span class="variable">record</span>[<span class="string">&apos;eventSourceARN&apos;</span>] <span class="operator">==</span> <span class="variable">self</span>.<span class="property">ARN_SOURCE</span>]
+        <span class="keyword">return</span> <span class="variable">messages</span>
+</code></pre>
+<p>The ideia is to create a object which will be receiving a ARN_SOURCE variable, the ARN of the SQS queue. It will only try to parse the messages from that queue and will try to parse based on the Message Class in the function parse_messages. If it can, will return an object of the Message Class. Replace the ARN_SOURCE variable with the one will create in a moment. Our handler will be then</p><pre><code class="python"><span class="keyword">def</span> <span class="function">handler_sqs</span>(<span class="variable">event</span>):
+
+    <span class="variable">sqs_handler</span> <span class="operator">=</span> <span class="function">SQSHandler</span>(<span class="variable">ARN_SOURCE</span>)
+    <span class="variable">messages</span> <span class="operator">=</span> <span class="variable">sqs_handler</span>.<span class="function method">parse_messages</span>(<span class="variable">event</span>)
+
+    <span class="keyword">for</span> <span class="variable">message</span> <span class="operator">in</span> <span class="variable">messages</span>:
+        <span class="function">open</span>(<span class="string">&apos;/tmp/&apos;</span> <span class="operator">+</span>  <span class="string">&quot;log.txt&quot;</span>, <span class="string">&apos;a+&apos;</span>).<span class="function method">write</span>(<span class="function">str</span>(<span class="variable">message</span>.<span class="function method">dict</span>()) <span class="operator">+</span> <span class="string">&quot;\n&quot;</span>)
+</code></pre>
+<p>It will try to parse the messages and write it down to a log.txt file. The full sqs_handler.py will be</p><pre><code class="python"><span class="keyword">from</span> <span class="variable">pydantic</span> <span class="keyword">import</span> <span class="variable">BaseModel</span>
+<span class="keyword">import</span> <span class="variable">json</span> 
+<span class="keyword">import</span> <span class="variable">os</span>
+
+<span class="variable">ARN_SOURCE</span> <span class="operator">=</span> <span class="string">f&apos;arn:aws:sqs:us-east-1:123456789012:mysqs&apos;</span>
+
+<span class="keyword">class</span> <span class="variable">Message</span>(<span class="variable">BaseModel</span>):
+    <span class="variable">command</span>: <span class="type">str</span>
+    <span class="variable">client_id</span>: <span class="type">str</span>
+
+<span class="keyword">class</span> <span class="variable">SQSHandler</span>():
+    <span class="keyword">def</span> <span class="function">__init__</span>(<span class="variable">self</span>, <span class="variable">ARN_SOURCE</span>):
+        <span class="variable">self</span>.<span class="property">ARN_SOURCE</span> <span class="operator">=</span> <span class="variable">ARN_SOURCE</span>
+
+    <span class="keyword">def</span> <span class="function">parse_messages</span>(<span class="variable">self</span>, <span class="variable">event</span>):
+        <span class="variable">messages</span> <span class="operator">=</span> [<span class="function">Message</span>(<span class="operator">**</span><span class="variable">json</span>.<span class="function method">loads</span>(<span class="variable">record</span>[<span class="string">&apos;body&apos;</span>])) <span class="keyword">for</span> <span class="variable">record</span> <span class="operator">in</span> <span class="variable">event</span>.<span class="function method">get</span>(<span class="string">&quot;Records&quot;</span>, []) <span class="keyword">if</span> <span class="variable">record</span>[<span class="string">&apos;eventSourceARN&apos;</span>] <span class="operator">==</span> <span class="variable">self</span>.<span class="property">ARN_SOURCE</span>]
+        <span class="keyword">return</span> <span class="variable">messages</span>
+
+<span class="keyword">def</span> <span class="function">handler_sqs</span>(<span class="variable">event</span>):
+
+    <span class="variable">sqs_handler</span> <span class="operator">=</span> <span class="function">SQSHandler</span>(<span class="variable">ARN_SOURCE</span>)
+    <span class="variable">messages</span> <span class="operator">=</span> <span class="variable">sqs_handler</span>.<span class="function method">parse_messages</span>(<span class="variable">event</span>)
+
+    <span class="keyword">for</span> <span class="variable">message</span> <span class="operator">in</span> <span class="variable">messages</span>:
+        <span class="function">open</span>(<span class="string">&apos;/tmp/&apos;</span> <span class="operator">+</span>  <span class="string">&quot;log.txt&quot;</span>, <span class="string">&apos;a+&apos;</span>).<span class="function method">write</span>(<span class="function">str</span>(<span class="variable">message</span>.<span class="function method">dict</span>()) <span class="operator">+</span> <span class="string">&quot;\n&quot;</span>)
+</code></pre>
+<p>That’s it for the API. We need to create the lambda_handler.py now</p><pre><code class="python"><span class="keyword">from</span> <span class="variable">mangum</span> <span class="keyword">import</span> <span class="variable">Mangum</span>
+<span class="keyword">from</span> <span class="variable">triggersqs</span>.<span class="variable">main</span> <span class="keyword">import</span> <span class="variable">app</span>
+<span class="keyword">from</span> <span class="variable">triggersqs</span>.<span class="variable">sqs_handler</span> <span class="keyword">import</span> <span class="variable">handler_sqs</span>
+
+<span class="keyword">def</span> <span class="function">event_handler</span>(<span class="variable">event</span>, <span class="variable">context</span>):
+    <span class="keyword">if</span> <span class="variable">event</span>.<span class="function method">get</span>(<span class="string">&quot;Records&quot;</span>):
+        <span class="keyword">return</span> <span class="function">handler_sqs</span>(<span class="variable">event</span>)
+
+    <span class="keyword">if</span> <span class="variable">event</span>.<span class="function method">get</span>(<span class="string">&quot;httpMethod&quot;</span>):
+        <span class="variable">asgi_handler</span> <span class="operator">=</span> <span class="function">Mangum</span>(<span class="variable">app</span>)
+        <span class="keyword">return</span> <span class="function">asgi_handler</span>(<span class="variable">event</span>, <span class="variable">context</span>)
+        
+    <span class="comment">#other handlers here</span>
+
+
+<span class="keyword">def</span> <span class="function">lambda_handler</span>(<span class="variable">event</span>, <span class="variable">context</span>):
+    <span class="keyword">return</span> <span class="function">event_handler</span>(<span class="variable">event</span>, <span class="variable">context</span>)
+</code></pre>
+<p>Everytime it receives a event, it will check if it’s a HTTP request (which Mangum will handle) or if it’s a SQS message (which our handler sqs_handler.py will handle). The  t will be</p><p><img src="/blog/sqs-lambda/img1.png" width="201" height="337"></p><p>To handle our dependencies, we can use poetry</p><pre><code>poetry init
+poetry add fastapi uvicorn mangum pydantic
+</code></pre><p>We can use Docker to containerize the project</p><pre><code>FROM public.ecr.aws/lambda/python:3.8 as build
+
+COPY ./pyproject.toml .
+COPY triggersqs/ triggersqs/
+
+RUN pip install poetry &amp;&amp; \
+    poetry config virtualenvs.create false &amp;&amp; \
+    poetry install
+
+COPY entrypoints/lambda_handler.py lambda_handler.py
+
+CMD [&quot;lambda_handler.lambda_handler&quot;]
+</code></pre><h2>Creating the ECR and the SQS Queue</h2><p>To deploy the package to a AWS Lambda, we first need to create a repository and upload the image. We can also create the SQS object here. Export your AWS Account Id to a enviroment variable called AWSACCOUNTID and run:</p><pre><code>docker build -t triggersqs:latest -t %AWSACCOUNTID%.dkr.ecr.us-east-1.amazonaws.com/triggersqs:latest . -f Dockerfile
+
+aws ecr create-repository --repository-name triggersqs
+
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 949250876409.dkr.ecr.us-east-1.amazonaws.com 
+
+aws sqs create-queue --queue-name triggersqs_Queue
+
+docker push %AWSACCOUNTID%.dkr.ecr.us-east-1.amazonaws.com/triggersqs:latest 
+</code></pre><h2>Creating the Lambda</h2><p>We can create the Lambda in a lot a different ways, from the CLI or using some Infra as a Code tool (like Terraform). I strongly recommend the use of Terraform, mainly because you can replicate the same infrastructure in many different enviroments.  For this tutorial we’ll be using the management console, mainly because of the simplicity.</p><p>A Lambda function can be created on the AWS Lambda page:</p><p><figure><img src="/blog/sqs-lambda/lambda1.png">
+<figcaption> </figcaption></figure></p><p>Our Lambda will use the container created before:</p><p><figure><img src="/blog/sqs-lambda/lambda2.png">
+<figcaption> </figcaption></figure></p><p>We need to give access to the SQS in the role of the Lambda. We can do this by adding:</p><p><figure><img src="/blog/sqs-lambda/lambda3.png">
+<figcaption> </figcaption></figure></p><p>An alternative is to add full access to the SQS services on the role of the Lambda. By finding the role of the Lambda, we need to attach the following policy:</p><p><figure><img src="/blog/sqs-lambda/lambda5.png">
+<figcaption> </figcaption></figure></p><p>Our final Lambda should look something like this: <figure><img src="/blog/sqs-lambda/lambda4.png">
+<figcaption> </figcaption></figure></p><h2>Testing</h2><p>To test it, we can test it using the Test tab on the same Lambda page we are working. First, we need to test receving a SQS message:</p><p><figure><img src="/blog/sqs-lambda/lambda8.png">
+<figcaption> </figcaption></figure></p><p>Now a API call to the endpoint /records to get all the messages: <figure><img src="/blog/sqs-lambda/img6.png" width="679" height="274">
+<figcaption> </figcaption></figure></p><p>The response should be <figure><img src="/blog/sqs-lambda/lambda12.png">
+<figcaption> </figcaption></figure></p><p>That’s it. Feel free to ask me any questions, explore the code on Github or contact me via LinkedIn. Keep on learning :D</p></div>
+  <div id="footnotes"></div>
+  <div>
+    <small><a href="/index.xml" rel="alternate" type="application/rss+xml">RSS feed</a></small>
+  </div>
+  <hr>
+  <div id="prev-next">
+    <span>
+      <a href="/blog/classification-model/">←
+        <span>Deploying a classification model on AWS Lambda with Docker and FastAPI</span></a>
+    </span>
+    <span></span>
+    <span></span>
+    <small>&nbsp; or &nbsp;</small>
+    <small>
+      <a href="/">Back to the Homepage</a>
+    </small>
+  </div>
+
+    </div>
+  </body>
+</html>
