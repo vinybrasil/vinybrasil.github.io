@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head id="head">
+    <meta charset="utf-8">
+    <title id="title">
+      An asynchronous Consumer and Producer API for Kafka with FastAPI in Python
+      | Viny Brasil's Blog
+    </title>
+    <meta name="description" content="Create a simple asynchronous API that works the same time as a Kafka&apos;s producer and consumer with Python&apos;s FastAPI">
+    <meta name="twitter:description" content="Create a simple asynchronous API that works the same time as a Kafka&apos;s producer and consumer with Python&apos;s FastAPI">
+    <meta name="twitter:title" content="An asynchronous Consumer and Producer API for Kafka with FastAPI in Python">
+    <meta property="og:title" content="An asynchronous Consumer and Producer API for Kafka with FastAPI in Python">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://kristoff.it/logo.png">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="/main.css?bust2">
+    <link type="text/css" rel="stylesheet" href="/highlight.css?bust">
+    <link rel="stylesheet" type="text/css" href="/fonts.css">
+    <link rel="stylesheet" type="text/css" href="/fira_code.css">
+    <link rel="stylesheet" type="text/css" href="/style.css">
+    <link rel="stylesheet" type="text/css" href="/highlight.css">
+    
+    <script id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+    
+    <script defer type="text/javascript" src="https://api.pirsch.io/pirsch.js" id="pirschjs" data-code="CnorXJVVDmhCee3FBtXSQISdHIUmqp3o"></script>
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y0TCWKTPYJ"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-Y0TCWKTPYJ');
+    </script>
+    
+  <link type="text/css" rel="stylesheet" href="/term-highlight.css">
+
+  </head>
+  <body>
+    <!-- <nav id="menu" class="centered"> -->
+    <nav>
+
+      <a href="/">Home</a>
+      •
+      <a href="/projects/">Posts</a>
+      •
+      <a href="/research/">Research</a>
+      •
+      <a href="https://linkedin.com/in/vinicyus-brasil" target="_blank">LinkedIn</a>
+      •
+      <a href="https://github.com/vinybrasil" target="_blank">Github</a>
+      
+    </nav>
+    <div id="content">
+      
+  <!-- <div style="display:flex; flex-direction:column; align-items:center;">
+    <h1 id="header"><a class="reset-a" href="/">Loris Cro</a></h1>
+    <small><i>Personal Website</i></small>
+    <div style="display:flex; justify-content:center; font-size:small;">
+      <a href="/">About</a>
+      	&nbsp; • &nbsp;
+      <a href="https://twitter.com/croloris">Twitter</a>
+      	&nbsp; • &nbsp;
+      <a href="https://twitch.tv/kristoff_it">Twitch</a>
+      	&nbsp; • &nbsp;
+      <a href="https://youtube.com/c/ZigSHOWTIME/">YouTube</a>
+      	&nbsp; • &nbsp;
+      <a href="https://github.com/kristoff-it">GitHub</a>
+    </div>
+  </div> -->
+  <h1>An asynchronous Consumer and Producer API for Kafka with FastAPI in Python</h1>
+  <p class="post-byline">
+    <span>June 27, 2022</span>
+    •
+    <span>5</span>
+    min read • by
+    <b>Vinicyus Brasil</b>
+    <span></span>
+  </p>
+  <div id="post-description">Create a simple asynchronous API that works the same time as a Kafka's producer and consumer with Python's FastAPI</div>
+  <div id="post-body"><p>Writing asynchronous code might be a little hard the first time you do it, mainly if you’re trying to do it as you’re working with some other difficult library like Kafka. Although it’s difficult, it’s worth the effort when you’re dealing with a high load or multiple microservices that can take some time to answer your calls.</p><p>The purpose of this article is to create an simple asynchronous API that works the same time as a Kafka’s producer and consumer. The full project it’s on my <a href="https://github.com/vinybrasil/fastapi_kafka" target="_blank">Github</a>.</p><h3>Setting up Kafka</h3><p>In this tutorial we’ll be using Docker to set up Kafka following the <a href="https://towardsdatascience.com/kafka-docker-python-408baf0e1088" target="_blank">Shuyi Yang’s tutorial[1]</a>. The docker-compose.yml file used will be:</p><pre><code class="yml"><span class="property">version</span><span class="punctuation delimiter">:</span> <span class="string">&apos;2&apos;</span>
+<span class="property">services</span><span class="punctuation delimiter">:</span>
+  <span class="property">zookeeper</span><span class="punctuation delimiter">:</span>
+    <span class="property">image</span><span class="punctuation delimiter">:</span> <span class="string">confluentinc/cp-zookeeper:latest</span>
+    <span class="property">environment</span><span class="punctuation delimiter">:</span>
+      <span class="property">ZOOKEEPER_CLIENT_PORT</span><span class="punctuation delimiter">:</span> <span class="number">2181</span>
+      <span class="property">ZOOKEEPER_TICK_TIME</span><span class="punctuation delimiter">:</span> <span class="number">2000</span>
+    <span class="property">ports</span><span class="punctuation delimiter">:</span>
+      <span class="punctuation delimiter">-</span> <span class="string">22181:2181</span>
+  
+  <span class="property">kafka</span><span class="punctuation delimiter">:</span>
+    <span class="property">image</span><span class="punctuation delimiter">:</span> <span class="string">confluentinc/cp-kafka:latest</span>
+    <span class="property">depends_on</span><span class="punctuation delimiter">:</span>
+      <span class="punctuation delimiter">-</span> <span class="string">zookeeper</span>
+    <span class="property">ports</span><span class="punctuation delimiter">:</span>
+      <span class="punctuation delimiter">-</span> <span class="string">29092:29092</span>
+    <span class="property">environment</span><span class="punctuation delimiter">:</span>
+      <span class="property">KAFKA_BROKER_ID</span><span class="punctuation delimiter">:</span> <span class="number">1</span>
+      <span class="property">KAFKA_ZOOKEEPER_CONNECT</span><span class="punctuation delimiter">:</span> <span class="string">zookeeper:2181</span>
+      <span class="property">KAFKA_ADVERTISED_LISTENERS</span><span class="punctuation delimiter">:</span> <span class="string">PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092</span>
+      <span class="property">KAFKA_LISTENER_SECURITY_PROTOCOL_MAP</span><span class="punctuation delimiter">:</span> <span class="string">PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT</span>
+      <span class="property">KAFKA_INTER_BROKER_LISTENER_NAME</span><span class="punctuation delimiter">:</span> <span class="string">PLAINTEXT</span>
+      <span class="property">KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR</span><span class="punctuation delimiter">:</span> <span class="number">1</span>
+</code></pre>
+<p>To create it, we can navigate to the folder and write:</p><pre><code>docker-compose -f docker-compose.yml up
+</code></pre><p>OBS: I’m using Windows, so commands might differ in Linux distros or MacOS. <br> We can now create a topic:</p><pre><code>docker exec -ti kafka /opt/kafka/bin/kafka-topics.sh --create --zookeeper zookeeper:2181 --replication-factor 1 --partitions 1 --topic test1
+</code></pre><p>And write some events to it:</p><pre><code class="bash"><span class="comment">## Write events</span>
+<span class="constant">docker</span> <span class="constant">exec</span> <span class="constant">-ti</span> <span class="constant">kafka</span> <span class="constant">/opt/kafka/bin/kafka-console-producer.sh</span> <span class="constant">--topic</span> <span class="constant">test1</span> <span class="constant">--bootstrap-server</span> <span class="constant">localhost:9092</span>
+
+<span class="comment">## Read events</span>
+<span class="constant">docker</span> <span class="constant">exec</span> <span class="constant">-ti</span> <span class="constant">kafka</span> <span class="constant">/opt/kafka/bin/kafka-console-consumer.sh</span> <span class="constant">--topic</span> <span class="constant">test1</span> <span class="constant">--from-beginning</span> <span class="constant">--bootstrap-server</span> <span class="constant">localhost:9092</span>
+</code></pre>
+<h3>Creating the API</h3><p>We’ll be using the library aiokafka to deal with Kafka and FastAPI to create the API, as in the awesome tutorial by <a href="https://iwpnd.pw/articles/2020-03/apache-kafka-fastapi-geostream" target="_blank">iwpnd[2]</a>. To simplify, the project will only have one python file called main.py. Importing the necessary libraries:</p><pre><code class="python"><span class="keyword">import</span> <span class="variable">asyncio</span>
+<span class="keyword">import</span> <span class="variable">json</span>
+
+<span class="keyword">from</span> <span class="variable">pydantic</span> <span class="keyword">import</span> <span class="variable">BaseModel</span>, <span class="variable">StrictStr</span>
+<span class="keyword">from</span> <span class="variable">aiokafka</span> <span class="keyword">import</span> <span class="variable">AIOKafkaConsumer</span>, <span class="variable">AIOKafkaProducer</span>
+<span class="keyword">from</span> <span class="variable">fastapi</span> <span class="keyword">import</span> <span class="variable">FastAPI</span>
+</code></pre>
+<p>Now, we need to create the FastAPI class and the loop objects.</p><pre><code class="python"><span class="variable">app</span> <span class="operator">=</span> <span class="function">FastAPI</span>()
+
+<span class="variable">loop</span> <span class="operator">=</span> <span class="variable">asyncio</span>.<span class="function method">get_event_loop</span>()
+
+<span class="variable">KAFKA_INSTANCE</span> <span class="operator">=</span> <span class="string">&quot;localhost:29092&quot;</span>
+</code></pre>
+<p>The loop object will be referenced in the creating of the Producer and the Consumer classes:</p><pre><code class="python"><span class="variable">aioproducer</span> <span class="operator">=</span> <span class="function">AIOKafkaProducer</span>(<span class="variable">loop</span><span class="operator">=</span><span class="variable">loop</span>, <span class="variable">bootstrap_servers</span><span class="operator">=</span><span class="variable">KAFKA_INSTANCE</span>)
+
+<span class="variable">consumer</span> <span class="operator">=</span> <span class="function">AIOKafkaConsumer</span>(<span class="string">&quot;test1&quot;</span>, <span class="variable">bootstrap_servers</span><span class="operator">=</span><span class="variable">KAFKA_INSTANCE</span>, <span class="variable">loop</span><span class="operator">=</span><span class="variable">loop</span>)
+</code></pre>
+<p>For the consumer part, we can create a consume function which has the purpose of printing the message of the topic (and it’s proprieties) in the server terminal everytime a new one arrives.</p><pre><code class="python"><span class="keyword">async</span> <span class="keyword">def</span> <span class="function">consume</span>():
+    <span class="keyword">await</span> <span class="variable">consumer</span>.<span class="function method">start</span>()
+    <span class="keyword">try</span>:
+        <span class="keyword">async</span> <span class="keyword">for</span> <span class="variable">msg</span> <span class="operator">in</span> <span class="variable">consumer</span>:
+            <span class="function">print</span>(
+                <span class="string">&quot;consumed: &quot;</span>,
+                <span class="variable">msg</span>.<span class="property">topic</span>,
+                <span class="variable">msg</span>.<span class="property">partition</span>,
+                <span class="variable">msg</span>.<span class="property">offset</span>,
+                <span class="variable">msg</span>.<span class="property">key</span>,
+                <span class="variable">msg</span>.<span class="property">value</span>,
+                <span class="variable">msg</span>.<span class="property">timestamp</span>,
+            )
+
+    <span class="keyword">finally</span>:
+        <span class="keyword">await</span> <span class="variable">consumer</span>.<span class="function method">stop</span>()
+</code></pre>
+<p>Now here’s the trick for the function of the consumer runs forever: the consume() function must be created at the startup of the API. With that, we guarantee that the function is running all the time.</p><pre><code class="python"><span class="function">@app.on_event(&quot;startup&quot;)</span>
+<span class="keyword">async</span> <span class="keyword">def</span> <span class="function">startup_event</span>():
+    <span class="keyword">await</span> <span class="variable">aioproducer</span>.<span class="function method">start</span>()
+    <span class="variable">loop</span>.<span class="function method">create_task</span>(<span class="function">consume</span>())
+
+
+<span class="function">@app.on_event(&quot;shutdown&quot;)</span>
+<span class="keyword">async</span> <span class="keyword">def</span> <span class="function">shutdown_event</span>():
+    <span class="keyword">await</span> <span class="variable">aioproducer</span>.<span class="function method">stop</span>()
+    <span class="keyword">await</span> <span class="variable">consumer</span>.<span class="function method">stop</span>()
+</code></pre>
+<p>We can now create the POST route that will produce the message when someone calls it. Here we got two classes to standardize the input.</p><pre><code class="python"><span class="keyword">class</span> <span class="variable">ProducerResponse</span>(<span class="variable">BaseModel</span>):
+    <span class="variable">name</span>: <span class="type">StrictStr</span>
+    <span class="variable">message_id</span>: <span class="type">StrictStr</span>
+    <span class="variable">topic</span>: <span class="type">StrictStr</span>
+    <span class="variable">timestamp</span>: <span class="type">StrictStr</span> <span class="operator">=</span> <span class="string">&quot;&quot;</span>
+
+<span class="keyword">class</span> <span class="variable">ProducerMessage</span>(<span class="variable">BaseModel</span>):
+    <span class="variable">name</span>: <span class="type">StrictStr</span>
+    <span class="variable">message_id</span>: <span class="type">StrictStr</span> <span class="operator">=</span> <span class="string">&quot;&quot;</span>
+    <span class="variable">timestamp</span>: <span class="type">StrictStr</span> <span class="operator">=</span> <span class="string">&quot;&quot;</span>
+
+<span class="function">@app.post(&quot;/producer/{topicname}&quot;)</span>
+<span class="keyword">async</span> <span class="keyword">def</span> <span class="function">kafka_produce</span>(<span class="variable">msg</span>: <span class="type">ProducerMessage</span>, <span class="variable">topicname</span>: <span class="type">str</span>):
+
+    <span class="keyword">await</span> <span class="variable">aioproducer</span>.<span class="function method">send</span>(<span class="variable">topicname</span>, <span class="variable">json</span>.<span class="function method">dumps</span>(<span class="variable">msg</span>.<span class="function method">dict</span>()).<span class="function method">encode</span>(<span class="string">&quot;ascii&quot;</span>))
+    <span class="variable">response</span> <span class="operator">=</span> <span class="function">ProducerResponse</span>(
+        <span class="variable">name</span><span class="operator">=</span><span class="variable">msg</span>.<span class="property">name</span>, <span class="variable">message_id</span><span class="operator">=</span><span class="variable">msg</span>.<span class="property">message_id</span>, <span class="variable">topic</span><span class="operator">=</span><span class="variable">topicname</span>
+    )
+
+    <span class="keyword">return</span> <span class="variable">response</span>
+</code></pre>
+<p>And that’s it for the API. We can start it using uvicorn:</p><pre><code class="bash"><span class="constant">uvicorn</span> <span class="constant">main:app</span> <span class="constant">--reload</span>
+</code></pre>
+<p>We can also test it using cURL:</p><pre><code class="bash"><span class="constant">curl</span> <span class="constant">-X</span> <span class="constant">POST</span> <span class="constant">-d</span> <span class="constant">{\&quot;name\&quot;:\&quot;salve\&quot;}</span> <span class="constant">-H</span> <span class="constant">&quot;Content-Type: application/json&quot;</span>  <span class="constant">http://localhost:8000/producer/test1</span>
+</code></pre>
+<p>It should return something like this:</p><p><img src="/blog/kafka-python-consumer-producer/kafkafastapiasyncfig1.png" width="1028" height="448"></p><p>In the server terminal, the results should look like:</p><p><img src="/blog/kafka-python-consumer-producer/kafkafastapiasyncfig2.png" width="1021" height="303"></p><p>That’s it. Feel free to ask any questions or to contribute in the github repository or in my personal email.</p><h3>References</h3><p>[1] Shuyi Yang. Apache Kafka: Docker Container and examples in Python. Available at <a href="https://towardsdatascience.com/kafka-docker-python-408baf0e1088" target="_blank">https://towardsdatascience.com/kafka-docker-python-408baf0e1088</a></p><p>[2] iwpnd. Apache Kafka producer and consumer with FastAPI and aiokafka. Available at <a href="https://iwpnd.pw/articles/2020-03/apache-kafka-fastapi-geostream" target="_blank">https://iwpnd.pw/articles/2020-03/apache-kafka-fastapi-geostream</a></p></div>
+  <div id="footnotes"></div>
+  <div>
+    <small><a href="/index.xml" rel="alternate" type="application/rss+xml">RSS feed</a></small>
+  </div>
+  <hr>
+  <div id="prev-next">
+    <span>
+      <a href="/projects/">←
+        <span>Posts</span></a>
+    </span>
+    <span>&nbsp; • &nbsp;</span>
+    <span>
+      <a href="/blog/classification-model/"><span>Deploying a classification model on AWS Lambda with Docker and FastAPI</span>
+        →</a>
+    </span>
+    <small>&nbsp; or &nbsp;</small>
+    <small>
+      <a href="/">Back to the Homepage</a>
+    </small>
+  </div>
+
+    </div>
+  </body>
+</html>

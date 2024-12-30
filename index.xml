@@ -1,0 +1,34 @@
+<rss version="2.0">
+	<channel>
+		<title>Vinicyus Brasil's Personal Website</title>
+		<link>https://vinybrasil.github.io/</link>
+		<description>Recent content on Vinicyus Brasil's Personal Website</description>
+		<generator>Zine -- https://github.com/kristoff-it/zine</generator>
+		<language>en-us</language>
+		<lastBuildDate>Thu, 26 Dec 2024 00:28:12 +0000</lastBuildDate>
+		
+			<item>
+				<title>Trigger a AWS Lambda with a SQS message with Python</title>
+				<link>https://vinybrasil.github.io/blog/sqs-lambda/</link>
+				<pubDate>Sat, 03 Dec 2022 00:00:00 +0000</pubDate>
+				<guid>https://vinybrasil.github.io/blog/sqs-lambda/</guid>
+			</item>
+
+			<item>
+				<title>Deploying a classification model on AWS Lambda with Docker and FastAPI</title>
+				<link>https://vinybrasil.github.io/blog/classification-model/</link>
+				<pubDate>Wed, 31 Aug 2022 00:00:00 +0000</pubDate>
+				<guid>https://vinybrasil.github.io/blog/classification-model/</guid>
+			</item>
+
+			<item>
+				<title>An asynchronous Consumer and Producer API for Kafka with FastAPI in Python</title>
+				<link>https://vinybrasil.github.io/blog/kafka-python-consumer-producer/</link>
+				<pubDate>Mon, 27 Jun 2022 00:00:00 +0000</pubDate>
+				<guid>https://vinybrasil.github.io/blog/kafka-python-consumer-producer/</guid>
+			</item>
+		
+
+		
+	</channel>
+</rss>
