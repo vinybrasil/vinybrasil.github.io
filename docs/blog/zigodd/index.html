@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head id="head">
+    <meta charset="utf-8">
+    <title id="title">
+      Convert decimal odds to probabilities with Zig
+      | Viny Brasil's Blog
+    </title>
+    <meta name="description" content="A Zig program for conversion and payout calculation">
+    <meta name="twitter:description" content="A Zig program for conversion and payout calculation">
+    <meta name="twitter:title" content="Convert decimal odds to probabilities with Zig">
+    <meta property="og:title" content="Convert decimal odds to probabilities with Zig">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://kristoff.it/logo.png">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="/main.css?bust2">
+    <link type="text/css" rel="stylesheet" href="/highlight.css?bust">
+    <link rel="stylesheet" type="text/css" href="/fonts.css">
+    <link rel="stylesheet" type="text/css" href="/fira_code.css">
+    <link rel="stylesheet" type="text/css" href="/style.css">
+    <link rel="stylesheet" type="text/css" href="/highlight.css">
+    
+    <script id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+    
+    <script defer type="text/javascript" src="https://api.pirsch.io/pirsch.js" id="pirschjs" data-code="CnorXJVVDmhCee3FBtXSQISdHIUmqp3o"></script>
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y0TCWKTPYJ"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-Y0TCWKTPYJ');
+    </script>
+    
+  <link type="text/css" rel="stylesheet" href="/term-highlight.css">
+
+  </head>
+  <body>
+    <!-- <nav id="menu" class="centered"> -->
+    <nav>
+
+      <a href="/">Home</a>
+      •
+      <a href="/projects/">Posts</a>
+      •
+      <a href="/research/">Research</a>
+      •
+      <a href="https://linkedin.com/in/vinicyus-brasil" target="_blank">LinkedIn</a>
+      •
+      <a href="https://github.com/vinybrasil" target="_blank">Github</a>
+      
+    </nav>
+    <div id="content">
+      
+  <!-- <div style="display:flex; flex-direction:column; align-items:center;">
+    <h1 id="header"><a class="reset-a" href="/">Loris Cro</a></h1>
+    <small><i>Personal Website</i></small>
+    <div style="display:flex; justify-content:center; font-size:small;">
+      <a href="/">About</a>
+      	&nbsp; • &nbsp;
+      <a href="https://twitter.com/croloris">Twitter</a>
+      	&nbsp; • &nbsp;
+      <a href="https://twitch.tv/kristoff_it">Twitch</a>
+      	&nbsp; • &nbsp;
+      <a href="https://youtube.com/c/ZigSHOWTIME/">YouTube</a>
+      	&nbsp; • &nbsp;
+      <a href="https://github.com/kristoff-it">GitHub</a>
+    </div>
+  </div> -->
+  <h1>Convert decimal odds to probabilities with Zig</h1>
+  <p class="post-byline">
+    <span>December 30, 2024</span>
+    •
+    <span>6</span>
+    min read • by
+    <b>Vinicyus Brasil</b>
+    <span></span>
+  </p>
+  <div id="post-description">A Zig program for conversion and payout calculation</div>
+  <div id="post-body"><h2>Introduction</h2><p>As sports betting expands across the world, more and more players don’t understand tha math behind it. So, the purpose of this article it’s to clarify how to convert from decimal odds to the probability behind them. The calculations are implemented in Zig, a system programming language perfect to create CLI tools because it’s fast and simple.</p><p>This article it’s divided into two sections: first we’ll talk about the math and them about the implementation. If you only need the code you can go directly to my <a href="https://github.com/vinybrasil/zigodd" target="_blank">GitHub</a>.</p><h2>The math</h2><p>A decimal odd is how much you’re going to win for each dollar spent. For example, if the odd is 4.1, for each dollar you bet you’re going to receive $4.1. Let’s call the decimal odd \( o_i \). The probability \( p_i \) related to the decimal odd \( o_i\) is \[ p_i = \frac{1}{o_i}. \]</p><p>In the example, the probability related to the odd 4.1 is approximate 24.39%.</p><p>Let us think the other way now. Given an event with the probability of 20%, let’s calculate how much the cassino should pay you: \[ 0.2 = \frac{1}{o_i} \therefore \] \[ o_i = \frac{1}{0.2} = 5. \]</p><p>So, for each dollar spent, the cassino should be paying you 5 dollars, but it doesn’t. The cassino only pays you a fraction of it, normally around 95%. The name of this fraction is <code>payout</code>. Naming it Equation 1, let us denote the payout by \(k \) and write: \[ p_i = k * \frac{1}{o_i}. \] Now calculate the odd with \( k = 0.95 \): \[ 0.2 = k * \frac{1}{o_i} \therefore \] \[ o_i =  0.95 * \frac{1}{0.2} = 4.75. \]</p><p>Therefore, for each dollar spent, you’re going to receive only 4.75 dollars. The 0.25 dollar here is the revenue of the cassino and that’s how they can make money with this sorts of gambles.</p><p>When the odds are given by the cassino, the payout is unknown and it can vary depending on the time of day, the importance of that game in particular etc. So, we need to calculate first the payout and then we can convert and find the probabilities the cassino is using with Equation 1. Given that the sum of probabilities must be equal to 1 (by the Kolmogorov’s axioms), we can write \[ 1 = \sum_{i=1}^{N} p_i \]</p><p>where N is the number of possible outcomes of the game. For a football game (or <code>soccer</code> for my beloved american readers), the value of N is 3, where all the events are the home team win, the away team win or a draw. For a basketball game, N = 2 (the home team win or the away team win). Since  \( p_i = k * \frac{1}{o_i}. \), the sum of the probabilities can be written as \[ 1 = \sum_{i=1}^{N} k * \frac{1}{o_i}. \] Isolating \( k \), we have now Equation 2: \[ k = \frac{1}{\sum_{i=1}^{N} \frac{1}{o_i}}  \] With the payout calculated we can now use the odds to calculate the probabilities.</p><p>Let’s do an example and use the following match odds. <img src="/blog/zigodd/img1.png" width="439" height="333"></p><p>Let \( o_1 \) be the probability of Liverpool to win, \( o_2 \) the probability of a draw and \( o_3 \) be the probability of Man United to win. Calcutating the payout with Equation 2: \[ k  = \frac{1}{\sum_{i=1}^{N} \frac{1}{o_i}} \therefore  \] \[ k  =  \frac{1}{\frac{1}{1.27} +  \frac{1}{6.00} +  \frac{1}{10.25}}  \therefore  \] \[ k  \approx  0.95091. \]</p><p>With the payout calculated, we can now calculate the probabilities using Equation 1.</p><ul><li><p>Liverpool to win: \[p_1 = 0.95091 * \frac{1}{1.27} \therefore \] \[p_1 = 74.8748 \% \]</p></li><li><p>Draw: \[p_2 = 0.95091 *  \frac{1}{6.00}  \therefore \] \[p_2 = 15.8485 \% \]</p></li><li><p>Man United to win: \[p_3 = 0.95091 *  \frac{1}{10.25} \therefore \] \[p_3 = 9.2772 \% \]</p></li></ul><h2>Zig implementation</h2><p>The version of Zig used is 0.13 since it’s the last stable release. The implementation must follow three steps:</p><ol><li>Collect all the odds from the command line;</li><li>Calculate Equation 2 (payout) and then  Equation 1 (the probabilities);</li><li>Print the values in the screen;</li></ol><p>We can start by building an empty project</p><pre><code class="bash"><span class="constant">mkdir</span> <span class="constant">zigodd</span>
+
+<span class="constant">zig</span> <span class="constant">init</span>
+</code></pre>
+<p>To get the arguments from the command line:</p><pre><code class="zig"><span class="keyword">const</span> <span class="variable">std</span> <span class="operator">=</span> <span class="keyword import">@import</span><span class="punctuation bracket">(</span><span class="string">&quot;std&quot;</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+<span class="keyword">const</span> <span class="variable">stdout</span> <span class="operator">=</span> <span class="variable">std</span><span class="punctuation delimiter">.</span><span class="variable member">io</span><span class="punctuation delimiter">.</span><span class="function call">getStdOut</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">.</span><span class="function call">writer</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+<span class="keyword modifier">pub</span> <span class="keyword function">fn</span> <span class="function">main</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span> <span class="type builtin">anyerror</span><span class="operator">!</span><span class="type builtin">void</span> <span class="punctuation bracket">{</span>
+
+    <span class="keyword">const</span> <span class="variable">args</span> <span class="operator">=</span> <span class="keyword exception">try</span> <span class="variable">std</span><span class="punctuation delimiter">.</span><span class="variable member">process</span><span class="punctuation delimiter">.</span><span class="function call">argsAlloc</span><span class="punctuation bracket">(</span><span class="variable">std</span><span class="punctuation delimiter">.</span><span class="variable member">heap</span><span class="punctuation delimiter">.</span><span class="variable member">page_allocator</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+    <span class="keyword">defer</span> <span class="variable">std</span><span class="punctuation delimiter">.</span><span class="variable member">process</span><span class="punctuation delimiter">.</span><span class="function call">argsFree</span><span class="punctuation bracket">(</span><span class="variable">std</span><span class="punctuation delimiter">.</span><span class="variable member">heap</span><span class="punctuation delimiter">.</span><span class="variable member">page_allocator</span><span class="punctuation delimiter">,</span> <span class="variable">args</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+<span class="punctuation bracket">}</span>
+</code></pre>
+<p>A way of implementing the equations above it’s creating a struct that keeps the values of the payout, the odds and the probabilities. Both of the later starts as empty arrays and the payout start with the value zero. Two functions are incorporated in the struct: a method for calculating the payout and other to calculate the probabilities.</p><pre><code class="zig"><span class="keyword">const</span> <span class="variable">Odds</span><span class="punctuation delimiter">:</span> <span class="type builtin">type</span> <span class="operator">=</span> <span class="keyword type">struct</span> <span class="punctuation bracket">{</span>
+    <span class="variable member">k</span><span class="punctuation delimiter">:</span> <span class="type builtin">f32</span> <span class="operator">=</span> <span class="number float">0.0</span><span class="punctuation delimiter">,</span>
+    <span class="variable member">odds</span><span class="punctuation delimiter">:</span> <span class="punctuation bracket">[</span><span class="punctuation bracket">]</span><span class="type builtin">f32</span> <span class="operator">=</span> <span class="constant builtin">undefined</span><span class="punctuation delimiter">,</span>
+    <span class="variable member">probabilities</span><span class="punctuation delimiter">:</span> <span class="punctuation bracket">[</span><span class="punctuation bracket">]</span><span class="type builtin">f32</span> <span class="operator">=</span> <span class="constant builtin">undefined</span><span class="punctuation delimiter">,</span>
+
+    <span class="keyword modifier">pub</span> <span class="keyword function">fn</span> <span class="function">calculate_k</span><span class="punctuation bracket">(</span><span class="variable parameter">self</span><span class="punctuation delimiter">:</span> <span class="operator">*</span><span class="variable">Odds</span><span class="punctuation bracket">)</span> <span class="type builtin">anyerror</span><span class="operator">!</span><span class="type builtin">void</span> <span class="punctuation bracket">{</span>
+        <span class="keyword">var</span> <span class="variable">sum</span><span class="punctuation delimiter">:</span> <span class="type builtin">f32</span> <span class="operator">=</span> <span class="number">0</span><span class="punctuation delimiter">;</span>
+
+        <span class="keyword repeat">for</span> <span class="punctuation bracket">(</span><span class="variable">self</span><span class="punctuation delimiter">.</span><span class="variable member">odds</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">|</span><span class="variable">item</span><span class="punctuation bracket">|</span> <span class="punctuation bracket">{</span>
+            <span class="variable">sum</span> <span class="operator">+=</span> <span class="punctuation bracket">(</span><span class="number">1</span> <span class="operator">/</span> <span class="variable">item</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+        <span class="punctuation bracket">}</span>
+
+        <span class="variable">self</span><span class="punctuation delimiter">.</span><span class="variable member">k</span> <span class="operator">=</span> <span class="number">1</span> <span class="operator">/</span> <span class="variable">sum</span><span class="punctuation delimiter">;</span>
+    <span class="punctuation bracket">}</span>
+
+    <span class="keyword modifier">pub</span> <span class="keyword function">fn</span> <span class="function">calculate_probabilities</span><span class="punctuation bracket">(</span><span class="variable parameter">self</span><span class="punctuation delimiter">:</span> <span class="operator">*</span><span class="variable">Odds</span><span class="punctuation bracket">)</span> <span class="type builtin">anyerror</span><span class="operator">!</span><span class="type builtin">void</span> <span class="punctuation bracket">{</span>
+        <span class="keyword">const</span> <span class="variable">allocator</span> <span class="operator">=</span> <span class="variable">std</span><span class="punctuation delimiter">.</span><span class="variable member">heap</span><span class="punctuation delimiter">.</span><span class="variable member">page_allocator</span><span class="punctuation delimiter">;</span>
+        <span class="keyword">var</span> <span class="variable">probs_processed</span> <span class="operator">=</span> <span class="variable">std</span><span class="punctuation delimiter">.</span><span class="function call">ArrayList</span><span class="punctuation bracket">(</span><span class="type builtin">f32</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">.</span><span class="function call">init</span><span class="punctuation bracket">(</span><span class="variable">allocator</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+        <span class="keyword repeat">for</span> <span class="punctuation bracket">(</span><span class="variable">self</span><span class="punctuation delimiter">.</span><span class="variable member">odds</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">|</span><span class="variable">item</span><span class="punctuation bracket">|</span> <span class="punctuation bracket">{</span>
+            <span class="keyword">const</span> <span class="variable">prob_processed</span> <span class="operator">=</span> <span class="variable">self</span><span class="punctuation delimiter">.</span><span class="variable member">k</span> <span class="operator">*</span> <span class="punctuation bracket">(</span><span class="number">1</span> <span class="operator">/</span> <span class="variable">item</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+            <span class="keyword exception">try</span> <span class="variable">probs_processed</span><span class="punctuation delimiter">.</span><span class="function call">append</span><span class="punctuation bracket">(</span><span class="variable">prob_processed</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+        <span class="punctuation bracket">}</span>
+
+        <span class="variable">self</span><span class="punctuation delimiter">.</span><span class="variable member">probabilities</span> <span class="operator">=</span> <span class="variable">probs_processed</span><span class="punctuation delimiter">.</span><span class="variable member">items</span><span class="punctuation delimiter">;</span>
+    <span class="punctuation bracket">}</span>
+<span class="punctuation bracket">}</span><span class="punctuation delimiter">;</span>
+</code></pre>
+<p>Inside the main function, the odds from the arguments can be allocated in a ArrayList and parsed into a float (f32). To convert to array, just call the attribute <code>.items</code>.</p><pre><code class="zig">    <span class="keyword">var</span> <span class="variable">myodds</span> <span class="operator">=</span> <span class="variable">Odds</span><span class="punctuation bracket">{</span><span class="punctuation bracket">}</span><span class="punctuation delimiter">;</span>
+
+    <span class="keyword">const</span> <span class="variable">len_probabilities</span><span class="punctuation delimiter">:</span> <span class="type builtin">u32</span> <span class="operator">=</span> <span class="keyword import">@intCast</span><span class="punctuation bracket">(</span><span class="variable">args</span><span class="punctuation delimiter">.</span><span class="variable member">len</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+    <span class="keyword">const</span> <span class="variable">odds_raw</span> <span class="operator">=</span> <span class="variable">args</span><span class="punctuation bracket">[</span><span class="number">1</span><span class="operator">..</span><span class="variable">len_probabilities</span><span class="punctuation bracket">]</span><span class="punctuation delimiter">;</span>
+
+    <span class="keyword">const</span> <span class="variable">allocator</span> <span class="operator">=</span> <span class="variable">std</span><span class="punctuation delimiter">.</span><span class="variable member">heap</span><span class="punctuation delimiter">.</span><span class="variable member">page_allocator</span><span class="punctuation delimiter">;</span>
+    <span class="keyword">var</span> <span class="variable">odds_processed</span> <span class="operator">=</span> <span class="variable">std</span><span class="punctuation delimiter">.</span><span class="function call">ArrayList</span><span class="punctuation bracket">(</span><span class="type builtin">f32</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">.</span><span class="function call">init</span><span class="punctuation bracket">(</span><span class="variable">allocator</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+    <span class="variable">defer</span> odds_processed<span class="punctuation delimiter">.</span><span class="function call">deinit</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+    <span class="keyword repeat">for</span> <span class="punctuation bracket">(</span><span class="variable">odds_raw</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">|</span><span class="variable">item</span><span class="punctuation bracket">|</span> <span class="punctuation bracket">{</span>
+        <span class="keyword">const</span> <span class="variable">odd_processed</span> <span class="operator">=</span> <span class="keyword exception">try</span> <span class="variable">std</span><span class="punctuation delimiter">.</span><span class="variable member">fmt</span><span class="punctuation delimiter">.</span><span class="function call">parseFloat</span><span class="punctuation bracket">(</span><span class="type builtin">f32</span><span class="punctuation delimiter">,</span> <span class="variable">item</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+        <span class="keyword exception">try</span> <span class="variable">odds_processed</span><span class="punctuation delimiter">.</span><span class="function call">append</span><span class="punctuation bracket">(</span><span class="variable">odd_processed</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+    <span class="punctuation bracket">}</span>
+
+    myodds<span class="punctuation delimiter">.</span><span class="variable member">odds</span> <span class="operator">=</span> <span class="variable">odds_processed</span><span class="punctuation delimiter">.</span><span class="variable member">items</span><span class="punctuation delimiter">;</span>
+</code></pre>
+<p>Also inside the main function, we are now able to call the methods to calculate the values.</p><pre><code class="zig">    <span class="keyword exception">try</span> <span class="variable">myodds</span><span class="punctuation delimiter">.</span><span class="function call">calculate_k</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+    <span class="keyword exception">try</span> <span class="variable">myodds</span><span class="punctuation delimiter">.</span><span class="function call">calculate_probabilities</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+</code></pre>
+<p>Finally, all the values can be printed to the screen.</p><pre><code class="zig">    <span class="keyword exception">try</span> <span class="variable">stdout</span><span class="punctuation delimiter">.</span><span class="function call">print</span><span class="punctuation bracket">(</span><span class="string">&quot;-------ZIGODD: ODDS TO PROBABILITY CONVERSOR-------\n&quot;</span><span class="punctuation delimiter">,</span> <span class="punctuation delimiter">.</span><span class="punctuation bracket">{</span><span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+    <span class="keyword exception">try</span> stdout<span class="punctuation delimiter">.</span><span class="function call">print</span><span class="punctuation bracket">(</span><span class="string">&quot;---decimal odds to convert: \n&quot;</span><span class="punctuation delimiter">,</span> <span class="punctuation delimiter">.</span><span class="punctuation bracket">{</span><span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+    <span class="keyword repeat">for</span> <span class="punctuation bracket">(</span><span class="variable">myodds</span><span class="punctuation delimiter">.</span><span class="variable member">odds</span><span class="punctuation delimiter">,</span> <span class="number">0</span><span class="operator">..</span><span class="punctuation bracket">)</span> <span class="operator">|</span><span class="variable">item</span><span class="punctuation delimiter">,</span> index<span class="operator">|</span> <span class="punctuation bracket">{</span>
+        <span class="keyword exception">try</span> <span class="variable">stdout</span><span class="punctuation delimiter">.</span><span class="function call">print</span><span class="punctuation bracket">(</span><span class="string">&quot;o{d}: {d:0.2}\n&quot;</span><span class="punctuation delimiter">,</span> <span class="punctuation delimiter">.</span><span class="punctuation bracket">{</span> <span class="variable">index</span> <span class="operator">+</span> <span class="number">1</span><span class="punctuation delimiter">,</span> <span class="variable">item</span> <span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+    <span class="punctuation bracket">}</span>
+    <span class="keyword exception">try</span> stdout<span class="punctuation delimiter">.</span><span class="function call">print</span><span class="punctuation bracket">(</span><span class="string">&quot;---calculated payout (k): \n&quot;</span><span class="punctuation delimiter">,</span> <span class="punctuation delimiter">.</span><span class="punctuation bracket">{</span><span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+    <span class="keyword exception">try</span> stdout<span class="punctuation delimiter">.</span><span class="function call">print</span><span class="punctuation bracket">(</span><span class="string">&quot;k: {d:0.5}\n&quot;</span><span class="punctuation delimiter">,</span> <span class="punctuation delimiter">.</span><span class="punctuation bracket">{</span><span class="variable">myodds</span><span class="punctuation delimiter">.</span><span class="variable member">k</span><span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+    <span class="keyword exception">try</span> stdout<span class="punctuation delimiter">.</span><span class="function call">print</span><span class="punctuation bracket">(</span><span class="string">&quot;---calculated probabilities: \n&quot;</span><span class="punctuation delimiter">,</span> <span class="punctuation delimiter">.</span><span class="punctuation bracket">{</span><span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+    <span class="keyword repeat">for</span> <span class="punctuation bracket">(</span><span class="variable">myodds</span><span class="punctuation delimiter">.</span><span class="variable member">probabilities</span><span class="punctuation delimiter">,</span> <span class="number">0</span><span class="operator">..</span><span class="punctuation bracket">)</span> <span class="operator">|</span><span class="variable">item</span><span class="punctuation delimiter">,</span> index<span class="operator">|</span> <span class="punctuation bracket">{</span>
+        <span class="keyword exception">try</span> <span class="variable">stdout</span><span class="punctuation delimiter">.</span><span class="function call">print</span><span class="punctuation bracket">(</span><span class="string">&quot;p{d}: {d:0.5}\n&quot;</span><span class="punctuation delimiter">,</span> <span class="punctuation delimiter">.</span><span class="punctuation bracket">{</span> <span class="variable">index</span> <span class="operator">+</span> <span class="number">1</span><span class="punctuation delimiter">,</span> <span class="variable">item</span> <span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+    <span class="punctuation bracket">}</span>
+
+    <span class="keyword exception">try</span> stdout<span class="punctuation delimiter">.</span><span class="function call">print</span><span class="punctuation bracket">(</span><span class="string">&quot;-----------------------------------------------------\n&quot;</span><span class="punctuation delimiter">,</span> <span class="punctuation delimiter">.</span><span class="punctuation bracket">{</span><span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+</code></pre>
+<p>The project can be built with the following code:</p><pre><code>zig build
+</code></pre><p>Running the code <code>./zig-out/bin/zigodd 1.27 6.00 10.25</code> with the values from the example give us the following result:</p><pre><code>-------ZIGODD: ODDS TO PROBABILITY CONVERTER-------
+---decimal odds to convert: 
+o1: 1.27
+o2: 6.00
+o3: 10.25
+---calculated payout (k): 
+k: 0.9509055
+---calculated probabilities: 
+p1: 0.7487445
+p2: 0.1584843
+p3: 0.0927713
+-----------------------------------------------------
+</code></pre><p>Note we are not worried about error handling. This should be a real concern to production apps, which is not our case here. As always, the full code is on my <a href="https://github.com/vinybrasil/zigodd" target="_blank">GitHub</a>.</p><p>That’s it. Fell free to open a PR on the GitHub repo to contact me if you find something wrong. Keep on learning :D</p></div>
+  <div id="footnotes"></div>
+  <div>
+    <small><a href="/index.xml" rel="alternate" type="application/rss+xml">RSS feed</a></small>
+  </div>
+  <hr>
+  <div id="prev-next">
+    <span>
+      <a href="/blog/sqs-lambda/">←
+        <span>Trigger a AWS Lambda with a SQS message with Python</span></a>
+    </span>
+    <span></span>
+    <span></span>
+    <small>&nbsp; or &nbsp;</small>
+    <small>
+      <a href="/">Back to the Homepage</a>
+    </small>
+  </div>
+
+    </div>
+  </body>
+</html>
