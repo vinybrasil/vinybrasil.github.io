@@ -1,0 +1,629 @@
+---
+.title = "Building a real-time Websocket webapp with Kafka and Javascript",
+.description = "Given a change in the database, show the changes to the clients via websockets",
+.author = "Vinicyus Brasil",
+.layout = "post.shtml",
+.date = @date("2025-01-06T00:00:00"),
+.draft = true,
+---
+
+## Introduction
+
+
+In this project we'll create a webapp which send a `websocket message` to their clients after
+receiving a message from a Kafka topic. This message comes from a new record being inserted in the database 
+from a API and captured by `debezium`. 
+
+The motivation for this project it's that recently I've been really interested on how sports betting website works, on how every second they're 
+updating the odds in the screen. The answer is `websockets`, which can be used to update in 
+near real-time the information to the client. 
+
+
+
+[]($image.asset("websocket.png")) 
+
+1) build the API to create the data;
+2) up the database and the scripts;
+3) up kafka and kafka connect with the necessary scripts;
+4) create the websocket server and the client
+
+
+## API to send request to database
+
+```python
+from typing import Union
+import mysql.connector 
+import random
+
+from fastapi import FastAPI
+
+app = FastAPI()
+
+import mysql.connector
+
+# o que eu to é '172.18.0.7'
+@app.on_event("startup")
+async def startup_event():
+    global mydb
+    mydb = mysql.connector.connect(
+    host="172.18.0.4",
+    user="debezium",
+    password="dbz",
+    database="gameodds"
+    )
+
+    print(mydb) 
+
+
+@app.get("/getall/{game_id}")
+def read_root(game_id: str):
+    mycursor = mydb.cursor()
+
+    #game_id = "123121"
+    mycursor.execute(f"SELECT * FROM game_{game_id}")
+
+    myresult = mycursor.fetchall()
+
+    print(myresult)
+    return myresult
+
+@app.post("/creategame/{game_id}")
+def read_root(game_id: str):
+    mycursor = mydb.cursor()
+
+    sql = f'''
+        CREATE TABLE IF NOT EXISTS game_{game_id} (
+            row_id INT AUTO_INCREMENT PRIMARY KEY,
+            game_id VARCHAR(50) NOT NULL,
+            odd1 VARCHAR(50),
+            odd2 VARCHAR(50),
+            odd3 VARCHAR(50),
+            odd4 VARCHAR(50),
+            odd5 VARCHAR(50),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );   
+    '''
+
+
+    mycursor.execute(sql)
+
+    mydb.commit()
+
+
+@app.post("/sendodd/{game_id}")
+def read_root(game_id: str):
+    mycursor = mydb.cursor()
+    #game_id = "123121"
+    odd1 = round(random.random() * 5, 2)
+    odd2 = round(random.random() * 5, 2)
+    odd3 = round(random.random() * 5, 2)
+    odd4 = round(random.random() * 5, 2)
+    odd5 = round(random.random() * 5, 2)
+
+    print(game_id, odd1, odd2, odd3, odd4, odd5)
+    sql = f'INSERT INTO game_{game_id} (game_id, odd1, odd2, odd3, odd4, odd5) VALUES ({game_id}, {str(odd1)}, {str(odd2)}, {str(odd3)}, {str(odd4)}, {str(odd5)})'
+
+    mycursor.execute(sql)
+
+    mydb.commit()
+
+    print(mycursor.rowcount, "record inserted.")
+
+
+# @app.get("/items/{item_id}")
+# def read_item(item_id: int, q: Union[str, None] = None):
+#     return {"item_id": item_id, "q": q}
+```
+
+Containerazing it with Docker
+```
+FROM python:3.9
+
+WORKDIR /code
+
+COPY ./requirements.txt /code/requirements.txt
+
+RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
+
+COPY ./app /code/app
+
+CMD ["fastapi", "run", "app/main.py", "--port", "80"]
+```
+
+and building the project: 
+```
+docker build -t fastapi-image . && docker run -d --name fastapi-container -p 80:80 --net websockets_default fastapi-image
+```
+
+Finally, testing it: 
+```
+curl -X POST "localhost:80/sendodd/123122"
+```
+
+
+
+
+## The docker-compose file
+
+
+```bash
+version: '3.7'
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.8.0
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+
+  kafka:
+    image: confluentinc/cp-kafka:7.8.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 100
+    depends_on:
+      - zookeeper
+
+  mysql:
+    # *-----------------------------*
+    # To connect to the DB:
+    #   docker exec -it mysql bash -c 'mysql -u root -p$MYSQL_ROOT_PASSWORD demo'
+    # *-----------------------------*
+    image: mysql:8.0
+    container_name: mysql
+    ports:
+      - 3306:3306
+    environment:
+     - MYSQL_ROOT_PASSWORD=debezium
+     - MYSQL_USER=mysqluser
+     - MYSQL_PASSWORD=mysqlpw
+     # - MYSQL_ROOT_HOST='%' 
+    volumes:
+     - ${PWD}/data/mysql:/docker-entrypoint-initdb.d
+     - ${PWD}/data:/data
+     - ./mysql-init:/docker-entrypoint-initdb.d
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.8.0
+    container_name: schema-registry
+    ports:
+      - "8081:8081"
+    depends_on:
+      - kafka
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka:29092
+  kafka-connect:
+    image: confluentinc/cp-kafka-connect-base:7.8.0
+    container_name: kafka-connect
+    depends_on:
+      - kafka
+      - schema-registry
+    ports:
+      - 8083:8083
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: "kafka:29092"
+      CONNECT_REST_PORT: 8083
+      CONNECT_GROUP_ID: kafka-connect
+      CONNECT_CONFIG_STORAGE_TOPIC: _connect-configs
+      CONNECT_OFFSET_STORAGE_TOPIC: _connect-offsets
+      CONNECT_STATUS_STORAGE_TOPIC: _connect-status
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+      CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: 'http://schema-registry:8081'
+      CONNECT_REST_ADVERTISED_HOST_NAME: "kafka-connect"
+      CONNECT_LOG4J_APPENDER_STDOUT_LAYOUT_CONVERSIONPATTERN: "[%d] %p %X{connector.context}%m (%c:%L)%n"
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: "1"
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: "1"
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: "1"
+    #  ---------------
+      CONNECT_PLUGIN_PATH: /usr/share/java,/usr/share/confluent-hub-components,/data/connect-jars
+    # If you want to use the Confluent Hub installer to d/l component, but make them available
+    # when running this offline, spin up the stack once and then run : 
+    #   docker cp kafka-connect:/usr/share/confluent-hub-components ./data/connect-jars
+    volumes:
+      - $PWD/data:/data
+    # In the command section, $ are replaced with $$ to avoid the error 'Invalid interpolation format for "command" option'
+    command:
+      - bash
+      - -c
+      - |
+        echo "Installing Connector"
+        confluent-hub install --no-prompt debezium/debezium-connector-mysql:1.7.0
+        #
+        echo "Launching Kafka Connect worker"
+        /etc/confluent/docker/run &
+        #
+        sleep infinity
+
+```
+
+## Setting up the database
+
+```bash
+-- Create a new user
+CREATE USER 'debezium'@'%' IDENTIFIED BY 'dbz';
+
+-- Grant privileges to the user
+GRANT ALL PRIVILEGES ON *.* TO 'debezium'@'%' WITH GRANT OPTION;
+
+-- Apply the changes
+FLUSH PRIVILEGES;
+
+
+CREATE DATABASE IF NOT EXISTS gameodds;
+
+-- Step 2: Use the database
+USE gameodds;
+
+-- Step 3: Create the 'customers' table
+CREATE TABLE IF NOT EXISTS game_123121 (
+    row_id INT AUTO_INCREMENT PRIMARY KEY,
+    game_id VARCHAR(50) NOT NULL,
+    odd1 VARCHAR(50),
+    odd2 VARCHAR(50),
+    odd3 VARCHAR(50),
+    odd4 VARCHAR(50),
+    odd5 VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Step 4: Insert random sample values
+INSERT INTO game_123121 (game_id, odd1, odd2, odd3, odd4, odd5) VALUES
+('123121', '2.01',  '2.01', '2.01', '2.01', '2.01'),
+('123121', '2.02',  '2.00', '2.05', '2.06', '2.00');
+```
+
+## Setting up Kafka Connector and debezium
+
+```bash
+docker-compose up -f docker-compose.yml -d 
+```
+
+```bash
+curl -i -X POST -H "Accept:application/json" \
+    -H  "Content-Type:application/json" http://localhost:8083/connectors/ \
+    -d '{
+      "name": "source-debezium-orders-04",
+      "config": {
+            "connector.class": "io.debezium.connector.mysql.MySqlConnector",
+            "database.hostname": "mysql",
+            "database.port": "3306",
+            "database.user": "debezium",
+            "database.password": "dbz",
+            "database.server.id": "43",
+            "database.server.name": "asgard",
+            "table.whitelist": "gameodds.game_123121",
+            "database.history.kafka.bootstrap.servers": "kafka:29092",
+            "database.history.kafka.topic": "dbserver2" ,
+            "decimal.handling.mode": "double",
+            "include.schema.changes": "true",
+            "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+            "value.converter.schemas.enable": "false",
+            "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+            "key.converter.schemas.enable": "false",
+            "transforms": "unwrap,addTopicPrefix",
+            "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+            "transforms.addTopicPrefix.type":"org.apache.kafka.connect.transforms.RegexRouter",
+            "transforms.addTopicPrefix.regex":"(.*)",
+            "transforms.addTopicPrefix.replacement":"mysql-debezium-json-no-schema-$1",
+            "database.allowPublicKeyRetrieval": "true"
+       }
+    }'
+
+curl -i -X POST -H "Accept:application/json" \
+    -H  "Content-Type:application/json" http://localhost:8083/connectors/ \
+    -d '{
+      "name": "source-debezium-orders-06",
+      "config": {
+            "connector.class": "io.debezium.connector.mysql.MySqlConnector",
+            "database.hostname": "mysql",
+            "database.port": "3306",
+            "database.user": "debezium",
+            "database.password": "dbz",
+            "database.server.id": "42",
+            "database.server.name": "asgard",
+            "table.whitelist": "gameodds.game_123122",
+            "database.history.kafka.bootstrap.servers": "kafka:29092",
+            "database.history.kafka.topic": "dbserver2" ,
+            "decimal.handling.mode": "double",
+            "include.schema.changes": "true",
+            "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+            "value.converter.schemas.enable": "false",
+            "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+            "key.converter.schemas.enable": "false",
+            "transforms": "unwrap,addTopicPrefix",
+            "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+            "transforms.addTopicPrefix.type":"org.apache.kafka.connect.transforms.RegexRouter",
+            "transforms.addTopicPrefix.regex":"(.*)",
+            "transforms.addTopicPrefix.replacement":"mysql-debezium-json-no-schema-$1",
+            "database.allowPublicKeyRetrieval": "true"
+       }
+    }'
+
+```
+
+
+## JS Websocket server
+
+The first thing we'll need is the websocket server, which will receive the messages from the Kafka topic and send them 
+to all the websocket clients. 
+
+```bash
+cd websocket_server
+npm init
+
+npm install ws@8.18.0 uuid@11.0.4
+```
+
+The following code creates a websocket server and a variable called `raw_odds`, the one which will store what comes from the 
+Kafka topic.
+
+```javascript
+const WebSocket = require("ws");
+const uuidv4 = require("uuid").v4;
+
+console.log("Server running");
+
+const wss = new WebSocket.Server({ port: 8080 });
+
+const clients = {};
+var raw_odds = {};
+
+wss.on("connection", (ws) => {
+  console.log("Client connected");
+
+  const userId = uuidv4();
+  console.log("Received a new connection");
+
+  clients[userId] = ws;
+
+  ws.send(`${userId}`);
+
+  ws.on("message", (message) => {
+    const data = JSON.parse(message);
+    raw_odds = data.payload;
+  });
+
+  ws.on("close", () => {
+    console.log("Client disconnected");
+  });
+});
+
+function update() {
+  console.log(raw_odds);
+
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify(raw_odds));
+    }
+  });
+}
+
+const intervalId = setInterval(update, 5000);
+```
+
+In the utils/ folder of the project, a test can be performed. It will just open a connection, send a websocket message to the server
+and then close it. The test_websocket.js: 
+
+```javascript
+import WebSocket from 'ws';
+
+var user = {
+    clientId: '',
+    data: {'payload': {'odd1': 1.2}} 
+  }
+
+const wss = new WebSocket('ws://localhost:8080', {
+  perMessageDeflate: false
+});
+
+wss.on('open', function open() {
+    wss.send('{}');
+  });
+
+wss.on('message', function message(event) {
+
+    if (user.clientId === ''){
+      user['clientId'] = event.toString();
+
+    }
+    console.log(user);
+  });
+
+function sendMessage(){
+    const message = JSON.stringify(user.data);
+    wss.send(message);
+    wss.close();
+}
+setTimeout(      
+    sendMessage, 2000
+)
+```
+
+To run it, the server must be running first:
+```bash
+node websocket-server/index.js
+```
+
+Then the test can be performed:
+```bash
+node test_websocket.js
+```
+
+## JS Websocket client
+
+For the client, we'll use React. Creating the project:
+
+```bash
+cd websocket_client
+npm install web-vitals@4.2.4 ws@8.18.0
+npx create-react-app .
+```
+
+The App.js will be:
+
+```javascript
+import './App.css';
+
+import React, { useEffect, useState } from 'react';
+
+const socket = new WebSocket('ws://localhost:8080');
+
+var user = {
+  clientId: ''
+}
+
+function App() {
+
+  const [message1, setMessage1] = useState({});
+  const [message2, setMessage2] = useState({});
+  const [game_ids, setGameIds] = useState([]);
+
+  useEffect(() => {
+
+    socket.onopen = function (event) {
+      console.log('You are Connected to WebSocket Server');
+    };
+    socket.onmessage = function (event) {
+
+      if (user.clientId === '') {
+        user['clientId'] = event.data;
+        return;
+      }
+
+      const payload = JSON.parse(event.data);
+
+      if (payload.game_id === '123121'){
+        setMessage1(payload);
+      } else if (payload.game_id === '123122') {
+        setMessage2(payload);
+      }
+
+    };
+
+    socket.onclose = function (event) {
+      console.log('Disconnected from WebSocket server');
+    };
+
+
+  });
+
+  function sendMessage() {
+
+    const messageInput = { 'payload': 'vapo2', 'clientId': user.clientId };
+
+    const message = JSON.stringify(messageInput);
+
+    socket.send(message);
+
+  };
+
+  function addGame(game_id) {
+    if (!game_ids.includes(game_id) ){
+      setGameIds(game_ids => [...game_ids, game_id]);
+    }
+  };
+
+
+  return (
+    <div className="App">
+      <header className="App-header">
+        <p>
+          Mercado de odds
+        </p>
+
+        <div id="output" className="container"> 
+        <ul className="list">
+            <li> {"Game:" +  message1.game_id } </li>
+            <li> {"odd1:" +  message1.odd1}  </li>
+            <li> {"odd2:" +  message1.odd2}  </li>
+            <li> {"odd3:" +  message1.odd3}  </li>
+            <li> {"odd4:" +  message1.odd4}  </li>
+            <li> {"odd5:" +  message1.odd5}  </li>
+        </ul>
+        <ul className="list">
+        <li> {"Game:" +  message2.game_id } </li>
+            <li> {"odd1:" +  message2.odd1}  </li>
+            <li> {"odd2:" +  message2.odd2}  </li>
+            <li> {"odd3:" +  message2.odd3}  </li>
+            <li> {"odd4:" +  message2.odd4}  </li>
+            <li> {"odd5:" +  message2.odd5}  </li>
+        </ul>
+        </div>
+      </header>
+    </div>
+  );
+}
+
+export default App;
+
+```
+
+Givin' it some style with css, the App.css will become:
+
+```javascript
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.container {
+  display: flex;
+  gap: 100px; 
+}
+.list {
+  list-style-type: none; 
+  padding: 0;
+  width: 45%; 
+}
+.list li {
+  margin: 5px 0; 
+}
+```
+

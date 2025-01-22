@@ -221,3 +221,53 @@ code.bash .keyword,
 code.bash .attribute {
   color: var(--light-red);
 }
+
+code.javascript {
+  color: var(--cyan);
+}
+
+code.javascript .punctuation {
+  color: var(--cyan);
+}
+
+code.javascript .string {
+  color: var(--dark-yellow);
+}
+
+code.javascript .template-string {
+  color: var(--dark-yellow);
+}
+
+code.javascript .variable,
+code.javascript .parameter,
+code.javascript .property,
+code.javascript .field {
+  color: var(--light-yellow);
+}
+
+code.javascript .keyword.function {
+  color: var(--light-red);
+}
+
+code.javascript .bracket {
+  color: var(--cyan);
+}
+
+code.javascript .function {
+  color: var(--blue);
+}
+
+code.javascript .builtin {
+  color: var(--magenta);
+}
+
+code.javascript .number {
+  color: var(--magenta);
+}
+
+code.javascript .operator,
+code.javascript .qualifier,
+code.javascript .keyword,
+code.javascript .attribute {
+  color: var(--light-red);
+}
