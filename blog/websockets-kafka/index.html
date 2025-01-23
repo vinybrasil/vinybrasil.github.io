@@ -6,8 +6,8 @@
       Building a real-time Websocket webapp with Kafka and Javascript
       | Viny Brasil's Blog
     </title>
-    <meta name="description" content="Given a change in the database, show the changes to the clients via websockets">
-    <meta name="twitter:description" content="Given a change in the database, show the changes to the clients via websockets">
+    <meta name="description" content="Given a change in the database, show the payload to the clients via websockets; This project can be used in chatbots, time series applications or sports betting websites">
+    <meta name="twitter:description" content="Given a change in the database, show the payload to the clients via websockets; This project can be used in chatbots, time series applications or sports betting websites">
     <meta name="twitter:title" content="Building a real-time Websocket webapp with Kafka and Javascript">
     <meta property="og:title" content="Building a real-time Websocket webapp with Kafka and Javascript">
     <meta property="og:type" content="website">
@@ -84,161 +84,8 @@
     <b>Vinicyus Brasil</b>
     <span></span>
   </p>
-  <div id="post-description">Given a change in the database, show the changes to the clients via websockets</div>
-  <div id="post-body"><h2>Introduction</h2><p>In this project we’ll create a webapp which send a <code>websocket message</code> to their clients after receiving a message from a Kafka topic. This message comes from a new record being inserted in the database from a API and captured by <code>debezium</code>.</p><p>The motivation for this project it’s that recently I’ve been really interested on how sports betting website works, on how every second they’re updating the odds in the screen. The answer is <code>websockets</code>, which can be used to update in near real-time the information to the client.</p><p><img src="/blog/websockets-kafka/websocket.png"></p><ol><li>build the API to create the data;</li><li>up the database and the scripts;</li><li>up kafka and kafka connect with the necessary scripts;</li><li>create the websocket server and the client</li></ol><h2>API to send request to database</h2><p>This payload will be sent to the database:</p><pre><code>{
-    &quot;game_id&quot;: &quot;123121&quot;,
-    &quot;odd1&quot;: 1.07,
-    &quot;odd2&quot;: 3.54,
-    &quot;odd3&quot;: 0.96,
-    &quot;odd4&quot;: 3.34,
-    &quot;odd5&quot;: 1.96
-}
-</code></pre><pre><code class="python"><span class="keyword">import</span> <span class="variable">mysql</span>.<span class="variable">connector</span> 
-<span class="keyword">import</span> <span class="variable">random</span>
-<span class="keyword">import</span> <span class="variable">requests</span>
-
-<span class="keyword">from</span> <span class="variable">fastapi</span> <span class="keyword">import</span> <span class="variable">FastAPI</span>
-
-<span class="variable">app</span> <span class="operator">=</span> <span class="function">FastAPI</span>()
-
-
-<span class="variable">KAFKA_CONNECT_IP</span> <span class="operator">=</span> <span class="string">&quot;172.18.0.6&quot;</span>
-<span class="variable">MYSQL_IP</span> <span class="operator">=</span> <span class="string">&quot;172.18.0.2&quot;</span>
-
-<span class="function">@app.on_event(&quot;startup&quot;)</span>
-<span class="keyword">async</span> <span class="keyword">def</span> <span class="function">startup_event</span>():
-    <span class="keyword">global</span> <span class="variable">mydb</span>
-    <span class="variable">mydb</span> <span class="operator">=</span> <span class="variable">mysql</span>.<span class="property">connector</span>.<span class="function method">connect</span>(
-    <span class="variable">host</span><span class="operator">=</span><span class="variable">MYSQL_IP</span>,
-    <span class="variable">user</span><span class="operator">=</span><span class="string">&quot;debezium&quot;</span>,
-    <span class="variable">password</span><span class="operator">=</span><span class="string">&quot;dbz&quot;</span>,
-    <span class="variable">database</span><span class="operator">=</span><span class="string">&quot;gameodds&quot;</span>
-    )
-
-
-<span class="function">@app.get(&quot;/games/{game_id}&quot;)</span>
-<span class="keyword">def</span> <span class="function">get_game_odds</span>(<span class="variable">game_id</span>: <span class="type">str</span>):
-    <span class="variable">mycursor</span> <span class="operator">=</span> <span class="variable">mydb</span>.<span class="function method">cursor</span>()
-
-    <span class="variable">mycursor</span>.<span class="function method">execute</span>(<span class="string">f&quot;SELECT * FROM game_{game_id}&quot;</span>)
-
-    <span class="variable">myresult</span> <span class="operator">=</span> <span class="variable">mycursor</span>.<span class="function method">fetchall</span>()
-
-    <span class="keyword">return</span> <span class="variable">myresult</span>
-
-<span class="function">@app.get(&quot;/games&quot;)</span>
-<span class="keyword">def</span> <span class="function">get_game_odds</span>():
-    <span class="variable">mycursor</span> <span class="operator">=</span> <span class="variable">mydb</span>.<span class="function method">cursor</span>()
-
-    <span class="variable">mycursor</span>.<span class="function method">execute</span>(<span class="string">f&quot;SELECT * FROM available_games&quot;</span>)
-
-    <span class="variable">myresult</span> <span class="operator">=</span> <span class="variable">mycursor</span>.<span class="function method">fetchall</span>()
-
-    <span class="keyword">return</span> <span class="variable">myresult</span>
-
-<span class="function">@app.post(&quot;/creategame/{game_id}&quot;)</span>
-<span class="keyword">def</span> <span class="function">create_game</span>(<span class="variable">game_id</span>: <span class="type">str</span>):
-    <span class="variable">mycursor</span> <span class="operator">=</span> <span class="variable">mydb</span>.<span class="function method">cursor</span>()
-
-    <span class="variable">sql</span> <span class="operator">=</span> <span class="string">f&apos;&apos;&apos;
-        CREATE TABLE IF NOT EXISTS game_{game_id} (
-            row_id INT AUTO_INCREMENT PRIMARY KEY,
-            game_id VARCHAR(50) NOT NULL,
-            odd1 VARCHAR(50),
-            odd2 VARCHAR(50),
-            odd3 VARCHAR(50),
-            odd4 VARCHAR(50),
-            odd5 VARCHAR(50),
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );   
-    &apos;&apos;&apos;</span>
-
-    <span class="variable">mycursor</span>.<span class="function method">execute</span>(<span class="variable">sql</span>)
-
-    <span class="variable">mydb</span>.<span class="function method">commit</span>()
-
-    <span class="variable">mycursor</span> <span class="operator">=</span> <span class="variable">mydb</span>.<span class="function method">cursor</span>()
-
-    <span class="variable">sql</span> <span class="operator">=</span> <span class="string">f&apos;&apos;&apos;INSERT INTO available_games (game_id, game_id_name, connector_name) 
-        SELECT &apos;{game_id}&apos;, &apos;{&quot;game_&quot; + str(game_id)}&apos;, 
-        &apos;{&quot;mysql-debezium-json-no-schema-asgard.gameodds.game_&quot; + str(game_id)}&apos; 
-        FROM DUAL WHERE NOT EXISTS ( SELECT 1 FROM available_games WHERE game_id = &apos;{game_id}&apos; ); 
-        &apos;&apos;&apos;</span>
-    <span class="function">print</span>(<span class="variable">sql</span>)
-    <span class="variable">mycursor</span>.<span class="function method">execute</span>(<span class="variable">sql</span>)
-
-    <span class="variable">mydb</span>.<span class="function method">commit</span>()
-
-    <span class="variable">create_connector</span> <span class="operator">=</span> <span class="variable">requests</span>.<span class="function method">post</span>(<span class="string">f&quot;http://{KAFKA_CONNECT_IP}:8083/connectors/&quot;</span>, <span class="variable">headers</span><span class="operator">=</span>{<span class="string">&quot;Accept&quot;</span>: <span class="string">&quot;application/json&quot;</span>, <span class="string">&quot;Content-Type&quot;</span>:<span class="string">&quot;application/json&quot;</span>}, <span class="variable">json</span><span class="operator">=</span>{
-      <span class="string">&quot;name&quot;</span>: <span class="string">f&quot;source-debezium-orders-{game_id}&quot;</span>,
-      <span class="string">&quot;config&quot;</span>: {
-            <span class="string">&quot;connector.class&quot;</span>: <span class="string">&quot;io.debezium.connector.mysql.MySqlConnector&quot;</span>,
-            <span class="string">&quot;database.hostname&quot;</span>: <span class="string">&quot;mysql&quot;</span>,
-            <span class="string">&quot;database.port&quot;</span>: <span class="string">&quot;3306&quot;</span>,
-            <span class="string">&quot;database.user&quot;</span>: <span class="string">&quot;debezium&quot;</span>,
-            <span class="string">&quot;database.password&quot;</span>: <span class="string">&quot;dbz&quot;</span>,
-            <span class="string">&quot;database.server.id&quot;</span>: <span class="string">f&quot;{game_id}&quot;</span>,
-            <span class="string">&quot;database.server.name&quot;</span>: <span class="string">&quot;asgard&quot;</span>,
-            <span class="string">&quot;table.whitelist&quot;</span>: <span class="string">f&quot;gameodds.game_{game_id}&quot;</span>,
-            <span class="string">&quot;database.history.kafka.bootstrap.servers&quot;</span>: <span class="string">&quot;kafka:29092&quot;</span>,
-            <span class="string">&quot;database.history.kafka.topic&quot;</span>: <span class="string">f&quot;dbserver_{game_id}&quot;</span> ,
-            <span class="string">&quot;decimal.handling.mode&quot;</span>: <span class="string">&quot;double&quot;</span>,
-            <span class="string">&quot;include.schema.changes&quot;</span>: <span class="string">&quot;true&quot;</span>,
-            <span class="string">&quot;value.converter&quot;</span>: <span class="string">&quot;org.apache.kafka.connect.json.JsonConverter&quot;</span>,
-            <span class="string">&quot;value.converter.schemas.enable&quot;</span>: <span class="string">&quot;false&quot;</span>,
-            <span class="string">&quot;key.converter&quot;</span>: <span class="string">&quot;org.apache.kafka.connect.json.JsonConverter&quot;</span>,
-            <span class="string">&quot;key.converter.schemas.enable&quot;</span>: <span class="string">&quot;false&quot;</span>,
-            <span class="string">&quot;transforms&quot;</span>: <span class="string">&quot;unwrap,addTopicPrefix&quot;</span>,
-            <span class="string">&quot;transforms.unwrap.type&quot;</span>: <span class="string">&quot;io.debezium.transforms.ExtractNewRecordState&quot;</span>,
-            <span class="string">&quot;transforms.addTopicPrefix.type&quot;</span>:<span class="string">&quot;org.apache.kafka.connect.transforms.RegexRouter&quot;</span>,
-            <span class="string">&quot;transforms.addTopicPrefix.regex&quot;</span>:<span class="string">&quot;(.*)&quot;</span>,
-            <span class="string">&quot;transforms.addTopicPrefix.replacement&quot;</span>:<span class="string">&quot;mysql-debezium-json-no-schema-$1&quot;</span>,
-            <span class="string">&quot;database.allowPublicKeyRetrieval&quot;</span>: <span class="string">&quot;true&quot;</span>
-       }
-    })
-
-
-
-<span class="function">@app.post(&quot;/sendodd/{game_id}&quot;)</span>
-<span class="keyword">def</span> <span class="function">read_root</span>(<span class="variable">game_id</span>: <span class="type">str</span>):
-    <span class="variable">mycursor</span> <span class="operator">=</span> <span class="variable">mydb</span>.<span class="function method">cursor</span>()
-
-    <span class="variable">odd1</span> <span class="operator">=</span> <span class="function">round</span>(<span class="variable">random</span>.<span class="function method">random</span>() <span class="operator">*</span> <span class="number">5</span>, <span class="number">2</span>)
-    <span class="variable">odd2</span> <span class="operator">=</span> <span class="function">round</span>(<span class="variable">random</span>.<span class="function method">random</span>() <span class="operator">*</span> <span class="number">5</span>, <span class="number">2</span>)
-    <span class="variable">odd3</span> <span class="operator">=</span> <span class="function">round</span>(<span class="variable">random</span>.<span class="function method">random</span>() <span class="operator">*</span> <span class="number">5</span>, <span class="number">2</span>)
-    <span class="variable">odd4</span> <span class="operator">=</span> <span class="function">round</span>(<span class="variable">random</span>.<span class="function method">random</span>() <span class="operator">*</span> <span class="number">5</span>, <span class="number">2</span>)
-    <span class="variable">odd5</span> <span class="operator">=</span> <span class="function">round</span>(<span class="variable">random</span>.<span class="function method">random</span>() <span class="operator">*</span> <span class="number">5</span>, <span class="number">2</span>)
-
-    <span class="variable">sql</span> <span class="operator">=</span> <span class="string">f&apos;INSERT INTO game_{game_id} (game_id, odd1, odd2, odd3, odd4, odd5) VALUES ({game_id}, {str(odd1)}, {str(odd2)}, {str(odd3)}, {str(odd4)}, {str(odd5)})&apos;</span>
-
-    <span class="variable">mycursor</span>.<span class="function method">execute</span>(<span class="variable">sql</span>)
-
-    <span class="variable">mydb</span>.<span class="function method">commit</span>()
-
-    <span class="function">print</span>(<span class="variable">mycursor</span>.<span class="property">rowcount</span>, <span class="string">&quot;record inserted.&quot;</span>)
-
-    <span class="keyword">return</span> {<span class="string">&quot;game_id&quot;</span>: <span class="variable">game_id</span>, <span class="string">&quot;odd1&quot;</span>: <span class="variable">odd1</span>, <span class="string">&quot;odd2&quot;</span>: <span class="variable">odd2</span>, <span class="string">&quot;odd3&quot;</span>: <span class="variable">odd3</span>, <span class="string">&quot;odd4&quot;</span>: <span class="variable">odd4</span>, <span class="string">&quot;odd5&quot;</span> : <span class="variable">odd5</span>}
-
-</code></pre>
-<p>To get the IPs:</p><pre><code>docker inspect --format=&apos;{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}&apos; $(docker ps -aq --filter &quot;name=mysql&quot;)
-
-docker inspect --format=&apos;{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}&apos; $(docker ps -aq --filter &quot;name=kafka&quot;)
-
-docker inspect --format=&apos;{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}&apos; $(docker ps -aq --filter &quot;name=kafka-connect&quot;)
-</code></pre><p>Containerazing it with Docker</p><pre><code>FROM python:3.9
-
-WORKDIR /code
-
-COPY ./requirements.txt /code/requirements.txt
-
-RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
-
-COPY ./app /code/app
-
-CMD [&quot;fastapi&quot;, &quot;run&quot;, &quot;app/main.py&quot;, &quot;--port&quot;, &quot;80&quot;]
-</code></pre><p>and building the project:</p><pre><code>docker build -t fastapi-image . &amp;&amp; docker run -d --name fastapi-container -p 80:80 --net websockets_default fastapi-image
-</code></pre><p>Finally, testing it:</p><pre><code>curl -X POST &quot;localhost:80/sendodd/123122&quot;
-</code></pre><h2>The docker-compose file</h2><pre><code class="bash"><span class="constant">services:</span>
+  <div id="post-description">Given a change in the database, show the payload to the clients via websockets; This project can be used in chatbots, time series applications or sports betting websites</div>
+  <div id="post-body"><h2>Introduction</h2><p>In this project we’ll create a webapp which send a <code>websocket message</code> to their clients after receiving a message from a Kafka topic. This message comes from a new record being inserted in the database from a API and captured by <code>debezium</code>.</p><p>The motivation for this project it’s that recently I’ve been really interested on how sports betting website works, on how every second they’re updating the odds in the screen. The answer is <code>websockets</code>, which can be used to update in near real-time the information to the client.</p><p><img src="/blog/websockets-kafka/websocket.png"></p><p>There are four main steps to build this system:</p><ol><li>setup Kafka and Kafka connect with the debezium plugin;</li><li>setup the database (MySQL) and the scripts to initialize it correctly;</li><li>build the API to create the data;</li><li>create the websocket server and the client;</li></ol><h2>Setting up Kafka Connector and debezium (the docker-compose file)</h2><p>To use Kafka we need Zookeeper, also included in the following docker-compose file. The file also creates the database and uses default password and username. Kafka-Connect installing the debezium plugin is where the magic happens. The plugin is responsable for get the data inserted in the database and push it to a Kafka topic.</p><pre><code class="bash"><span class="constant">services:</span>
   <span class="constant">zookeeper:</span>
     <span class="constant">image:</span> <span class="constant">confluentinc/cp-zookeeper:7.8.0</span>
     <span class="constant">container_name:</span> <span class="constant">zookeeper</span>
@@ -331,7 +178,9 @@ CMD [&quot;fastapi&quot;, &quot;run&quot;, &quot;app/main.py&quot;, &quot;--port
   <span class="constant">my-network-name:</span>
    <span class="constant">name:</span> <span class="constant">websockets</span>
 </code></pre>
-<h2>Setting up the database</h2><pre><code class="bash"><span class="constant">CREATE</span> <span class="constant">USER</span> <span class="constant">&apos;debezium&apos;@&apos;%&apos;</span> <span class="constant">IDENTIFIED</span> <span class="constant">BY</span> <span class="constant">&apos;dbz&apos;</span>;
+<p>Note we are naming the network that docker will use. It is importante because all of the services must be in the same network. To run it:</p><pre><code class="bash"><span class="constant">docker-compose</span> <span class="constant">up</span> <span class="constant">-f</span> <span class="constant">docker-compose.yml</span> <span class="constant">-d</span> 
+</code></pre>
+<h2>Setting up the database</h2><p>Each game will use a table in the database “gameodds” and the table will be called game_$gameid, where $gameid is a int identifing each game. By creating the database we also need to grant the privileges to the user (please, don’t let credentials like this explicity in the code in production, you’re gonna get yourself fired). The following script file will to be in the ‘mysql-init’ folder and it will run every time docker-compose up.</p><pre><code class="bash"><span class="constant">CREATE</span> <span class="constant">USER</span> <span class="constant">&apos;debezium&apos;@&apos;%&apos;</span> <span class="constant">IDENTIFIED</span> <span class="constant">BY</span> <span class="constant">&apos;dbz&apos;</span>;
 
 <span class="constant">GRANT</span> <span class="constant">ALL</span> <span class="constant">PRIVILEGES</span> <span class="constant">ON</span> <span class="constant">*.*</span> <span class="constant">TO</span> <span class="constant">&apos;debezium&apos;@&apos;%&apos;</span> <span class="constant">WITH</span> <span class="constant">GRANT</span> <span class="constant">OPTION</span>;
 
@@ -350,14 +199,125 @@ CMD [&quot;fastapi&quot;, &quot;run&quot;, &quot;app/main.py&quot;, &quot;--port
     <span class="constant">created_at</span> <span class="constant">TIMESTAMP</span> <span class="constant">DEFAULT</span> <span class="constant">CURRENT_TIMESTAMP</span>
 );
 </code></pre>
-<h2>Setting up Kafka Connector and debezium</h2><pre><code class="bash"><span class="constant">docker-compose</span> <span class="constant">up</span> <span class="constant">-f</span> <span class="constant">docker-compose.yml</span> <span class="constant">-d</span> 
-</code></pre>
-<h2>JS Websocket server</h2><p>The first thing we’ll need is the websocket server, which will receive the messages from the Kafka topic and send them to all the websocket clients.</p><pre><code class="bash"><span class="constant">cd</span> <span class="constant">websocket_server</span>
-<span class="constant">npm</span> <span class="constant">init</span>
+<h2>API to send request to database</h2><p>The API needs two routes:</p><ul><li><p>/games: the game odds will be stored in a table called “available_games”. Calling a POST request to this route will create the table and then send a POST request to Kafka-Connect to create the connector, which will create the topic in Kafka and send the payloads;</p></li><li><p>/sendodd: this route generates a random payload and inserts it into the database (in a real scenario, it would calculate the odd based on some external data);</p></li></ul><p>A simple payload will be sent to the database with some random values:</p><pre><code>{
+    &quot;game_id&quot;: &quot;123121&quot;,
+    &quot;odd1&quot;: 1.07,
+    &quot;odd2&quot;: 3.54,
+    &quot;odd3&quot;: 0.96,
+    &quot;odd4&quot;: 3.34,
+    &quot;odd5&quot;: 1.96
+}
+</code></pre><p>The simpler way to create the API for this project it’s by using FastAPI. When the program starts, it will run a function called “startup_event” and connect the program to the database.</p><pre><code class="python"><span class="keyword">import</span> <span class="variable">mysql</span>.<span class="variable">connector</span> 
+<span class="keyword">import</span> <span class="variable">random</span>
+<span class="keyword">import</span> <span class="variable">requests</span>
 
-<span class="constant">npm</span> <span class="constant">install</span> <span class="constant">ws@8.18.0</span> <span class="constant">uuid@11.0.4</span>
+<span class="keyword">from</span> <span class="variable">fastapi</span> <span class="keyword">import</span> <span class="variable">FastAPI</span>
+
+<span class="variable">app</span> <span class="operator">=</span> <span class="function">FastAPI</span>()
+
+
+<span class="variable">KAFKA_CONNECT_IP</span> <span class="operator">=</span> <span class="string">&quot;172.18.0.6&quot;</span>
+<span class="variable">MYSQL_IP</span> <span class="operator">=</span> <span class="string">&quot;172.18.0.2&quot;</span>
+
+<span class="function">@app.on_event(&quot;startup&quot;)</span>
+<span class="keyword">async</span> <span class="keyword">def</span> <span class="function">startup_event</span>():
+    <span class="keyword">global</span> <span class="variable">mydb</span>
+    <span class="variable">mydb</span> <span class="operator">=</span> <span class="variable">mysql</span>.<span class="property">connector</span>.<span class="function method">connect</span>(
+    <span class="variable">host</span><span class="operator">=</span><span class="variable">MYSQL_IP</span>,
+    <span class="variable">user</span><span class="operator">=</span><span class="string">&quot;debezium&quot;</span>,
+    <span class="variable">password</span><span class="operator">=</span><span class="string">&quot;dbz&quot;</span>,
+    <span class="variable">database</span><span class="operator">=</span><span class="string">&quot;gameodds&quot;</span>
+    )
 </code></pre>
-<p>The following code creates a websocket server and a variable called <code>raw_odds</code>, the one which will store what comes from the Kafka topic.</p><pre><code class="javascript"><span class="keyword">const</span> <span class="variable">WebSocket</span> <span class="operator">=</span> <span class="function">require</span><span class="punctuation bracket">(</span><span class="string">&quot;ws&quot;</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+<p>Note that two variables are used: KAFKA_CONNECT_IP and MYSQL_IP, both internal IPs of the containers. To get them, we can inspect manually using <code>docker network inspect websockets_default</code> or with this:</p><pre><code>docker inspect --format=&apos;{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}&apos; $(docker ps -aq --filter &quot;name=mysql&quot;)
+
+docker inspect --format=&apos;{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}&apos; $(docker ps -aq --filter &quot;name=kafka-connect&quot;)
+</code></pre><p>The /games route creates a new table using pure SQL based on the $game_id from the request. Then, it calls the kafka-connect API creating a new connector with this table.</p><pre><code class="python"><span class="function">@app.post(&quot;/games/{game_id}&quot;)</span>
+<span class="keyword">def</span> <span class="function">create_game</span>(<span class="variable">game_id</span>: <span class="type">str</span>):
+    <span class="variable">mycursor</span> <span class="operator">=</span> <span class="variable">mydb</span>.<span class="function method">cursor</span>()
+
+    <span class="variable">sql</span> <span class="operator">=</span> <span class="string">f&apos;&apos;&apos;
+        CREATE TABLE IF NOT EXISTS game_{game_id} (
+            row_id INT AUTO_INCREMENT PRIMARY KEY,
+            game_id VARCHAR(50) NOT NULL,
+            odd1 VARCHAR(50),
+            odd2 VARCHAR(50),
+            odd3 VARCHAR(50),
+            odd4 VARCHAR(50),
+            odd5 VARCHAR(50),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );   
+    &apos;&apos;&apos;</span>
+
+    <span class="variable">mycursor</span>.<span class="function method">execute</span>(<span class="variable">sql</span>)
+
+    <span class="variable">mydb</span>.<span class="function method">commit</span>()
+
+    <span class="variable">mycursor</span> <span class="operator">=</span> <span class="variable">mydb</span>.<span class="function method">cursor</span>()
+
+    <span class="variable">sql</span> <span class="operator">=</span> <span class="string">f&apos;&apos;&apos;INSERT INTO available_games (game_id, game_id_name, connector_name) 
+        SELECT &apos;{game_id}&apos;, &apos;{&quot;game_&quot; + str(game_id)}&apos;, 
+        &apos;{&quot;mysql-debezium-json-no-schema-asgard.gameodds.game_&quot; + str(game_id)}&apos; 
+        FROM DUAL WHERE NOT EXISTS ( SELECT 1 FROM available_games WHERE game_id = &apos;{game_id}&apos; ); 
+        &apos;&apos;&apos;</span>
+    <span class="function">print</span>(<span class="variable">sql</span>)
+    <span class="variable">mycursor</span>.<span class="function method">execute</span>(<span class="variable">sql</span>)
+
+    <span class="variable">mydb</span>.<span class="function method">commit</span>()
+
+    <span class="variable">create_connector</span> <span class="operator">=</span> <span class="variable">requests</span>.<span class="function method">post</span>(<span class="string">f&quot;http://{KAFKA_CONNECT_IP}:8083/connectors/&quot;</span>, <span class="variable">headers</span><span class="operator">=</span>{<span class="string">&quot;Accept&quot;</span>: <span class="string">&quot;application/json&quot;</span>, <span class="string">&quot;Content-Type&quot;</span>:<span class="string">&quot;application/json&quot;</span>}, <span class="variable">json</span><span class="operator">=</span>{
+      <span class="string">&quot;name&quot;</span>: <span class="string">f&quot;source-debezium-orders-{game_id}&quot;</span>,
+      <span class="string">&quot;config&quot;</span>: {
+            <span class="string">&quot;connector.class&quot;</span>: <span class="string">&quot;io.debezium.connector.mysql.MySqlConnector&quot;</span>,
+            <span class="string">&quot;database.hostname&quot;</span>: <span class="string">&quot;mysql&quot;</span>,
+            <span class="string">&quot;database.port&quot;</span>: <span class="string">&quot;3306&quot;</span>,
+            <span class="string">&quot;database.user&quot;</span>: <span class="string">&quot;debezium&quot;</span>,
+            <span class="string">&quot;database.password&quot;</span>: <span class="string">&quot;dbz&quot;</span>,
+            <span class="string">&quot;database.server.id&quot;</span>: <span class="string">f&quot;{game_id}&quot;</span>,
+            <span class="string">&quot;database.server.name&quot;</span>: <span class="string">&quot;asgard&quot;</span>,
+            <span class="string">&quot;table.whitelist&quot;</span>: <span class="string">f&quot;gameodds.game_{game_id}&quot;</span>,
+            <span class="string">&quot;database.history.kafka.bootstrap.servers&quot;</span>: <span class="string">&quot;kafka:29092&quot;</span>,
+            <span class="string">&quot;database.history.kafka.topic&quot;</span>: <span class="string">f&quot;dbserver_{game_id}&quot;</span> ,
+            <span class="string">&quot;decimal.handling.mode&quot;</span>: <span class="string">&quot;double&quot;</span>,
+            <span class="string">&quot;include.schema.changes&quot;</span>: <span class="string">&quot;true&quot;</span>,
+            <span class="string">&quot;value.converter&quot;</span>: <span class="string">&quot;org.apache.kafka.connect.json.JsonConverter&quot;</span>,
+            <span class="string">&quot;value.converter.schemas.enable&quot;</span>: <span class="string">&quot;false&quot;</span>,
+            <span class="string">&quot;key.converter&quot;</span>: <span class="string">&quot;org.apache.kafka.connect.json.JsonConverter&quot;</span>,
+            <span class="string">&quot;key.converter.schemas.enable&quot;</span>: <span class="string">&quot;false&quot;</span>,
+            <span class="string">&quot;transforms&quot;</span>: <span class="string">&quot;unwrap,addTopicPrefix&quot;</span>,
+            <span class="string">&quot;transforms.unwrap.type&quot;</span>: <span class="string">&quot;io.debezium.transforms.ExtractNewRecordState&quot;</span>,
+            <span class="string">&quot;transforms.addTopicPrefix.type&quot;</span>:<span class="string">&quot;org.apache.kafka.connect.transforms.RegexRouter&quot;</span>,
+            <span class="string">&quot;transforms.addTopicPrefix.regex&quot;</span>:<span class="string">&quot;(.*)&quot;</span>,
+            <span class="string">&quot;transforms.addTopicPrefix.replacement&quot;</span>:<span class="string">&quot;mysql-debezium-json-no-schema-$1&quot;</span>,
+            <span class="string">&quot;database.allowPublicKeyRetrieval&quot;</span>: <span class="string">&quot;true&quot;</span>
+       }
+    })
+
+</code></pre>
+<p>The /sendodd route just creates the odds randomly and insert it into the table.</p><pre><code class="python"><span class="function">@app.post(&quot;/sendodd/{game_id}&quot;)</span>
+<span class="keyword">def</span> <span class="function">read_root</span>(<span class="variable">game_id</span>: <span class="type">str</span>):
+    <span class="variable">mycursor</span> <span class="operator">=</span> <span class="variable">mydb</span>.<span class="function method">cursor</span>()
+
+    <span class="variable">odd1</span> <span class="operator">=</span> <span class="function">round</span>(<span class="variable">random</span>.<span class="function method">random</span>() <span class="operator">*</span> <span class="number">5</span>, <span class="number">2</span>)
+    <span class="variable">odd2</span> <span class="operator">=</span> <span class="function">round</span>(<span class="variable">random</span>.<span class="function method">random</span>() <span class="operator">*</span> <span class="number">5</span>, <span class="number">2</span>)
+    <span class="variable">odd3</span> <span class="operator">=</span> <span class="function">round</span>(<span class="variable">random</span>.<span class="function method">random</span>() <span class="operator">*</span> <span class="number">5</span>, <span class="number">2</span>)
+    <span class="variable">odd4</span> <span class="operator">=</span> <span class="function">round</span>(<span class="variable">random</span>.<span class="function method">random</span>() <span class="operator">*</span> <span class="number">5</span>, <span class="number">2</span>)
+    <span class="variable">odd5</span> <span class="operator">=</span> <span class="function">round</span>(<span class="variable">random</span>.<span class="function method">random</span>() <span class="operator">*</span> <span class="number">5</span>, <span class="number">2</span>)
+
+    <span class="variable">sql</span> <span class="operator">=</span> <span class="string">f&apos;INSERT INTO game_{game_id} (game_id, odd1, odd2, odd3, odd4, odd5) VALUES ({game_id}, {str(odd1)}, {str(odd2)}, {str(odd3)}, {str(odd4)}, {str(odd5)})&apos;</span>
+
+    <span class="variable">mycursor</span>.<span class="function method">execute</span>(<span class="variable">sql</span>)
+
+    <span class="variable">mydb</span>.<span class="function method">commit</span>()
+
+    <span class="function">print</span>(<span class="variable">mycursor</span>.<span class="property">rowcount</span>, <span class="string">&quot;record inserted.&quot;</span>)
+
+    <span class="keyword">return</span> {<span class="string">&quot;game_id&quot;</span>: <span class="variable">game_id</span>, <span class="string">&quot;odd1&quot;</span>: <span class="variable">odd1</span>, <span class="string">&quot;odd2&quot;</span>: <span class="variable">odd2</span>, <span class="string">&quot;odd3&quot;</span>: <span class="variable">odd3</span>, <span class="string">&quot;odd4&quot;</span>: <span class="variable">odd4</span>, <span class="string">&quot;odd5&quot;</span> : <span class="variable">odd5</span>}
+</code></pre>
+<p>Containerazing it with Docker (check the Dockerfile in the repository) and building the project (note we are using the “net” argument so it can access the database ):</p><pre><code>docker build -t fastapi-image . &amp;&amp; docker run -d --name fastapi-container -p 80:80 --net websockets_default fastapi-image
+</code></pre><p>Let’s create a game with the id = 123122:</p><pre><code>curl -X POST &quot;localhost:80/games/123122&quot;
+</code></pre><p>Send some odds to the database:</p><pre><code>curl -X POST &quot;localhost:80/sendodd/123122&quot;
+</code></pre><h2>JS Websocket server</h2><p>The first thing we’ll need is the websocket server, which will receive the messages from the Kafka topic and send them to all the websocket clients. The version of the packages used are ws@8.18.0 and uuid@11.0.4. The following code uses Javascript to create a websocket server and a variable called <code>raw_odds</code>, the one which will store what comes from the Kafka topic.</p><pre><code class="javascript"><span class="keyword">const</span> <span class="variable">WebSocket</span> <span class="operator">=</span> <span class="function">require</span><span class="punctuation bracket">(</span><span class="string">&quot;ws&quot;</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
 <span class="keyword">const</span> <span class="variable">uuidv4</span> <span class="operator">=</span> <span class="function">require</span><span class="punctuation bracket">(</span><span class="string">&quot;uuid&quot;</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">.</span><span class="property">v4</span><span class="punctuation delimiter">;</span>
 <span class="keyword">var</span> <span class="variable">mysql</span> <span class="operator">=</span> <span class="function">require</span><span class="punctuation bracket">(</span><span class="string">&quot;mysql2&quot;</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
 
@@ -458,57 +418,7 @@ CMD [&quot;fastapi&quot;, &quot;run&quot;, &quot;app/main.py&quot;, &quot;--port
 
 <span class="keyword">const</span> <span class="variable">intervalId</span> <span class="operator">=</span> <span class="function">setInterval</span><span class="punctuation bracket">(</span><span class="variable">update</span><span class="punctuation delimiter">,</span> <span class="number">5000</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
 </code></pre>
-<p>In the utils/ folder of the project, a test can be performed. It will just open a connection, send a websocket message to the server and then close it. The test_websocket.js:</p><pre><code class="javascript"><span class="keyword">import</span> <span class="variable">WebSocket</span> <span class="keyword">from</span> <span class="string">&apos;ws&apos;</span><span class="punctuation delimiter">;</span>
-
-<span class="keyword">var</span> <span class="variable">user</span> <span class="operator">=</span> <span class="punctuation bracket">{</span>
-    <span class="property">clientId</span>: <span class="string">&apos;&apos;</span><span class="punctuation delimiter">,</span>
-    <span class="property">data</span>: <span class="punctuation bracket">{</span><span class="string">&apos;payload&apos;</span>: <span class="punctuation bracket">{</span><span class="string">&apos;odd1&apos;</span>: <span class="number">1.2</span><span class="punctuation bracket">}</span><span class="punctuation bracket">}</span> 
-  <span class="punctuation bracket">}</span>
-
-<span class="keyword">const</span> <span class="variable">wss</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="variable">WebSocket</span><span class="punctuation bracket">(</span><span class="string">&apos;ws://localhost:8080&apos;</span><span class="punctuation delimiter">,</span> <span class="punctuation bracket">{</span>
-  <span class="property">perMessageDeflate</span>: <span class="constant builtin">false</span>
-<span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
-
-<span class="variable">wss</span><span class="punctuation delimiter">.</span><span class="function method">on</span><span class="punctuation bracket">(</span><span class="string">&apos;open&apos;</span><span class="punctuation delimiter">,</span> <span class="keyword">function</span> <span class="function">open</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">{</span>
-    <span class="variable">wss</span><span class="punctuation delimiter">.</span><span class="function method">send</span><span class="punctuation bracket">(</span><span class="string">&apos;{}&apos;</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
-  <span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
-
-<span class="variable">wss</span><span class="punctuation delimiter">.</span><span class="function method">on</span><span class="punctuation bracket">(</span><span class="string">&apos;message&apos;</span><span class="punctuation delimiter">,</span> <span class="keyword">function</span> <span class="function">message</span><span class="punctuation bracket">(</span><span class="variable">event</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">{</span>
-
-    <span class="keyword">if</span> <span class="punctuation bracket">(</span><span class="variable">user</span><span class="punctuation delimiter">.</span><span class="property">clientId</span> <span class="operator">===</span> <span class="string">&apos;&apos;</span><span class="punctuation bracket">)</span><span class="punctuation bracket">{</span>
-      <span class="variable">user</span><span class="punctuation bracket">[</span><span class="string">&apos;clientId&apos;</span><span class="punctuation bracket">]</span> <span class="operator">=</span> <span class="variable">event</span><span class="punctuation delimiter">.</span><span class="function method">toString</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
-
-    <span class="punctuation bracket">}</span>
-    <span class="variable">console</span><span class="punctuation delimiter">.</span><span class="function method">log</span><span class="punctuation bracket">(</span><span class="variable">user</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
-  <span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
-
-<span class="keyword">function</span> <span class="function">sendMessage</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span><span class="punctuation bracket">{</span>
-    <span class="keyword">const</span> <span class="variable">message</span> <span class="operator">=</span> <span class="variable">JSON</span><span class="punctuation delimiter">.</span><span class="function method">stringify</span><span class="punctuation bracket">(</span><span class="variable">user</span><span class="punctuation delimiter">.</span><span class="property">data</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
-    <span class="variable">wss</span><span class="punctuation delimiter">.</span><span class="function method">send</span><span class="punctuation bracket">(</span><span class="variable">message</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
-    <span class="variable">wss</span><span class="punctuation delimiter">.</span><span class="function method">close</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
-<span class="punctuation bracket">}</span>
-<span class="function">setTimeout</span><span class="punctuation bracket">(</span>      
-    <span class="variable">sendMessage</span><span class="punctuation delimiter">,</span> <span class="number">2000</span>
-<span class="punctuation bracket">)</span>
-</code></pre>
-<p>To run it, the server must be running first:</p><pre><code class="bash"><span class="constant">node</span> <span class="constant">websocket-server/index.js</span>
-</code></pre>
-<p>Then the test can be performed:</p><pre><code class="bash"><span class="constant">node</span> <span class="constant">test_websocket.js</span>
-</code></pre>
-<pre><code>FROM node:22
-
-WORKDIR /usr/src/app
-
-COPY package*.json ./
-
-RUN npm install
-
-COPY . .
-
-EXPOSE 3000
-
-CMD [&quot;node&quot;, &quot;index.js&quot;]
-</code></pre><h2>JS Websocket client</h2><p>For the client, we’ll use React. Creating the project in the websocket_client folder create-react-app@5.0.1, web-vitals@4.2.4 and ws@8.18.0.</p><p><img src="/blog/websockets-kafka/final.png" width="1342" height="642"></p><p>The App.js will be:</p><pre><code class="javascript"><span class="keyword">import</span> <span class="string">&apos;./App.css&apos;</span><span class="punctuation delimiter">;</span>
+<p>OBS: In the utils/ folder of the project there’s a js file with a test. It will just open a connection, send a websocket message to the server and then close it. It’s just for testing pourposes but it can be useful if something isn’t working.</p><h2>JS Websocket client</h2><p>For the client, we’ll use React. The version of the packages used are create-react-app@5.0.1, web-vitals@4.2.4 and ws@8.18.0. Creating the app with create-react-app, the App.js will be:</p><pre><code class="javascript"><span class="keyword">import</span> <span class="string">&apos;./App.css&apos;</span><span class="punctuation delimiter">;</span>
 
 <span class="keyword">import</span> <span class="variable">React</span><span class="punctuation delimiter">,</span> <span class="punctuation bracket">{</span> <span class="variable">useEffect</span><span class="punctuation delimiter">,</span> <span class="variable">useState</span> <span class="punctuation bracket">}</span> <span class="keyword">from</span> <span class="string">&apos;react&apos;</span><span class="punctuation delimiter">;</span>
 
@@ -616,23 +526,9 @@ CMD [&quot;node&quot;, &quot;index.js&quot;]
 <span class="keyword">export</span> <span class="keyword">default</span> <span class="variable">App</span><span class="punctuation delimiter">;</span>
 
 </code></pre>
-<p>Givin’ it some style with css, the App.css.</p><pre><code>FROM node:18-alpine AS build
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm install
-
-COPY . .
-
-RUN npm run build
-
-FROM nginx:alpine
-COPY --from=build /app/build /usr/share/nginx/html
-
-EXPOSE 80
-
-CMD [&quot;nginx&quot;, &quot;-g&quot;, &quot;daemon off;&quot;]
-</code></pre></div>
+<p>The Dockerfile for the WebSocket client uses nginx to serve the built app. The final app looks something like this:</p><p><img src="/blog/websockets-kafka/final.png" width="1342" height="642"></p><h2>Testing</h2><p>If everything is ok, by starting the docker-compose, the API, the websocker server and the client, by calling the API</p><pre><code>curl -X POST &quot;localhost:80/games/123122&quot;
+curl -X POST &quot;localhost:80/sendodd/123122&quot;
+</code></pre><p>we should see the new odds updated in the browser.</p><p>That’s it. You can check the full source code in the <a href="https://github.com/vinybrasil/websocket-kafka" target="_blank">repository</a>. Keep on learning :D</p></div>
   <div id="footnotes"></div>
   <div>
     <small><a href="/index.xml" rel="alternate" type="application/rss+xml">RSS feed</a></small>
