@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head id="head">
+    <meta charset="utf-8">
+    <title id="title">
+      Building a real-time Websocket webapp with Kafka and Javascript
+      | Viny Brasil's Blog
+    </title>
+    <meta name="description" content="Given a change in the database, show the changes to the clients via websockets">
+    <meta name="twitter:description" content="Given a change in the database, show the changes to the clients via websockets">
+    <meta name="twitter:title" content="Building a real-time Websocket webapp with Kafka and Javascript">
+    <meta property="og:title" content="Building a real-time Websocket webapp with Kafka and Javascript">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://vinybrasil.github.io/logo.png">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="/main.css?bust2">
+    <link type="text/css" rel="stylesheet" href="/highlight.css?bust">
+    <link rel="stylesheet" type="text/css" href="/fonts.css">
+    <link rel="stylesheet" type="text/css" href="/fira_code.css">
+    <link rel="stylesheet" type="text/css" href="/style.css">
+    <link rel="stylesheet" type="text/css" href="/highlight.css">
+    
+    <script id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+    
+    <script defer type="text/javascript" src="https://api.pirsch.io/pirsch.js" id="pirschjs" data-code="CnorXJVVDmhCee3FBtXSQISdHIUmqp3o"></script>
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y0TCWKTPYJ"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-Y0TCWKTPYJ');
+    </script>
+    
+  <link type="text/css" rel="stylesheet" href="/term-highlight.css">
+
+  </head>
+  <body>
+    <!-- <nav id="menu" class="centered"> -->
+    <nav>
+
+      <a href="/">Home</a>
+      •
+      <a href="/projects/">Posts</a>
+      •
+      <a href="/research/">Research</a>
+      •
+      <a href="https://linkedin.com/in/vinicyus-brasil" target="_blank">LinkedIn</a>
+      •
+      <a href="https://github.com/vinybrasil" target="_blank">Github</a>
+      
+    </nav>
+    <div id="content">
+      
+  <!-- <div style="display:flex; flex-direction:column; align-items:center;">
+    <h1 id="header"><a class="reset-a" href="/">Loris Cro</a></h1>
+    <small><i>Personal Website</i></small>
+    <div style="display:flex; justify-content:center; font-size:small;">
+      <a href="/">About</a>
+      	&nbsp; • &nbsp;
+      <a href="https://twitter.com/croloris">Twitter</a>
+      	&nbsp; • &nbsp;
+      <a href="https://twitch.tv/kristoff_it">Twitch</a>
+      	&nbsp; • &nbsp;
+      <a href="https://youtube.com/c/ZigSHOWTIME/">YouTube</a>
+      	&nbsp; • &nbsp;
+      <a href="https://github.com/kristoff-it">GitHub</a>
+    </div>
+  </div> -->
+  <h1>Building a real-time Websocket webapp with Kafka and Javascript</h1>
+  <p class="post-byline">
+    <span>January 06, 2025</span>
+    •
+    <span>13</span>
+    min read • by
+    <b>Vinicyus Brasil</b>
+    <span></span>
+  </p>
+  <div id="post-description">Given a change in the database, show the changes to the clients via websockets</div>
+  <div id="post-body"><h2>Introduction</h2><p>In this project we’ll create a webapp which send a <code>websocket message</code> to their clients after receiving a message from a Kafka topic. This message comes from a new record being inserted in the database from a API and captured by <code>debezium</code>.</p><p>The motivation for this project it’s that recently I’ve been really interested on how sports betting website works, on how every second they’re updating the odds in the screen. The answer is <code>websockets</code>, which can be used to update in near real-time the information to the client.</p><p><img src="/blog/websockets-kafka/websocket.png"></p><ol><li>build the API to create the data;</li><li>up the database and the scripts;</li><li>up kafka and kafka connect with the necessary scripts;</li><li>create the websocket server and the client</li></ol><h2>API to send request to database</h2><p>This payload will be sent to the database:</p><pre><code>{
+    &quot;game_id&quot;: &quot;123121&quot;,
+    &quot;odd1&quot;: 1.07,
+    &quot;odd2&quot;: 3.54,
+    &quot;odd3&quot;: 0.96,
+    &quot;odd4&quot;: 3.34,
+    &quot;odd5&quot;: 1.96
+}
+</code></pre><pre><code class="python"><span class="keyword">import</span> <span class="variable">mysql</span>.<span class="variable">connector</span> 
+<span class="keyword">import</span> <span class="variable">random</span>
+<span class="keyword">import</span> <span class="variable">requests</span>
+
+<span class="keyword">from</span> <span class="variable">fastapi</span> <span class="keyword">import</span> <span class="variable">FastAPI</span>
+
+<span class="variable">app</span> <span class="operator">=</span> <span class="function">FastAPI</span>()
+
+
+<span class="variable">KAFKA_CONNECT_IP</span> <span class="operator">=</span> <span class="string">&quot;172.18.0.6&quot;</span>
+<span class="variable">MYSQL_IP</span> <span class="operator">=</span> <span class="string">&quot;172.18.0.2&quot;</span>
+
+<span class="function">@app.on_event(&quot;startup&quot;)</span>
+<span class="keyword">async</span> <span class="keyword">def</span> <span class="function">startup_event</span>():
+    <span class="keyword">global</span> <span class="variable">mydb</span>
+    <span class="variable">mydb</span> <span class="operator">=</span> <span class="variable">mysql</span>.<span class="property">connector</span>.<span class="function method">connect</span>(
+    <span class="variable">host</span><span class="operator">=</span><span class="variable">MYSQL_IP</span>,
+    <span class="variable">user</span><span class="operator">=</span><span class="string">&quot;debezium&quot;</span>,
+    <span class="variable">password</span><span class="operator">=</span><span class="string">&quot;dbz&quot;</span>,
+    <span class="variable">database</span><span class="operator">=</span><span class="string">&quot;gameodds&quot;</span>
+    )
+
+
+<span class="function">@app.get(&quot;/games/{game_id}&quot;)</span>
+<span class="keyword">def</span> <span class="function">get_game_odds</span>(<span class="variable">game_id</span>: <span class="type">str</span>):
+    <span class="variable">mycursor</span> <span class="operator">=</span> <span class="variable">mydb</span>.<span class="function method">cursor</span>()
+
+    <span class="variable">mycursor</span>.<span class="function method">execute</span>(<span class="string">f&quot;SELECT * FROM game_{game_id}&quot;</span>)
+
+    <span class="variable">myresult</span> <span class="operator">=</span> <span class="variable">mycursor</span>.<span class="function method">fetchall</span>()
+
+    <span class="keyword">return</span> <span class="variable">myresult</span>
+
+<span class="function">@app.get(&quot;/games&quot;)</span>
+<span class="keyword">def</span> <span class="function">get_game_odds</span>():
+    <span class="variable">mycursor</span> <span class="operator">=</span> <span class="variable">mydb</span>.<span class="function method">cursor</span>()
+
+    <span class="variable">mycursor</span>.<span class="function method">execute</span>(<span class="string">f&quot;SELECT * FROM available_games&quot;</span>)
+
+    <span class="variable">myresult</span> <span class="operator">=</span> <span class="variable">mycursor</span>.<span class="function method">fetchall</span>()
+
+    <span class="keyword">return</span> <span class="variable">myresult</span>
+
+<span class="function">@app.post(&quot;/creategame/{game_id}&quot;)</span>
+<span class="keyword">def</span> <span class="function">create_game</span>(<span class="variable">game_id</span>: <span class="type">str</span>):
+    <span class="variable">mycursor</span> <span class="operator">=</span> <span class="variable">mydb</span>.<span class="function method">cursor</span>()
+
+    <span class="variable">sql</span> <span class="operator">=</span> <span class="string">f&apos;&apos;&apos;
+        CREATE TABLE IF NOT EXISTS game_{game_id} (
+            row_id INT AUTO_INCREMENT PRIMARY KEY,
+            game_id VARCHAR(50) NOT NULL,
+            odd1 VARCHAR(50),
+            odd2 VARCHAR(50),
+            odd3 VARCHAR(50),
+            odd4 VARCHAR(50),
+            odd5 VARCHAR(50),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );   
+    &apos;&apos;&apos;</span>
+
+    <span class="variable">mycursor</span>.<span class="function method">execute</span>(<span class="variable">sql</span>)
+
+    <span class="variable">mydb</span>.<span class="function method">commit</span>()
+
+    <span class="variable">mycursor</span> <span class="operator">=</span> <span class="variable">mydb</span>.<span class="function method">cursor</span>()
+
+    <span class="variable">sql</span> <span class="operator">=</span> <span class="string">f&apos;&apos;&apos;INSERT INTO available_games (game_id, game_id_name, connector_name) 
+        SELECT &apos;{game_id}&apos;, &apos;{&quot;game_&quot; + str(game_id)}&apos;, 
+        &apos;{&quot;mysql-debezium-json-no-schema-asgard.gameodds.game_&quot; + str(game_id)}&apos; 
+        FROM DUAL WHERE NOT EXISTS ( SELECT 1 FROM available_games WHERE game_id = &apos;{game_id}&apos; ); 
+        &apos;&apos;&apos;</span>
+    <span class="function">print</span>(<span class="variable">sql</span>)
+    <span class="variable">mycursor</span>.<span class="function method">execute</span>(<span class="variable">sql</span>)
+
+    <span class="variable">mydb</span>.<span class="function method">commit</span>()
+
+    <span class="variable">create_connector</span> <span class="operator">=</span> <span class="variable">requests</span>.<span class="function method">post</span>(<span class="string">f&quot;http://{KAFKA_CONNECT_IP}:8083/connectors/&quot;</span>, <span class="variable">headers</span><span class="operator">=</span>{<span class="string">&quot;Accept&quot;</span>: <span class="string">&quot;application/json&quot;</span>, <span class="string">&quot;Content-Type&quot;</span>:<span class="string">&quot;application/json&quot;</span>}, <span class="variable">json</span><span class="operator">=</span>{
+      <span class="string">&quot;name&quot;</span>: <span class="string">f&quot;source-debezium-orders-{game_id}&quot;</span>,
+      <span class="string">&quot;config&quot;</span>: {
+            <span class="string">&quot;connector.class&quot;</span>: <span class="string">&quot;io.debezium.connector.mysql.MySqlConnector&quot;</span>,
+            <span class="string">&quot;database.hostname&quot;</span>: <span class="string">&quot;mysql&quot;</span>,
+            <span class="string">&quot;database.port&quot;</span>: <span class="string">&quot;3306&quot;</span>,
+            <span class="string">&quot;database.user&quot;</span>: <span class="string">&quot;debezium&quot;</span>,
+            <span class="string">&quot;database.password&quot;</span>: <span class="string">&quot;dbz&quot;</span>,
+            <span class="string">&quot;database.server.id&quot;</span>: <span class="string">f&quot;{game_id}&quot;</span>,
+            <span class="string">&quot;database.server.name&quot;</span>: <span class="string">&quot;asgard&quot;</span>,
+            <span class="string">&quot;table.whitelist&quot;</span>: <span class="string">f&quot;gameodds.game_{game_id}&quot;</span>,
+            <span class="string">&quot;database.history.kafka.bootstrap.servers&quot;</span>: <span class="string">&quot;kafka:29092&quot;</span>,
+            <span class="string">&quot;database.history.kafka.topic&quot;</span>: <span class="string">f&quot;dbserver_{game_id}&quot;</span> ,
+            <span class="string">&quot;decimal.handling.mode&quot;</span>: <span class="string">&quot;double&quot;</span>,
+            <span class="string">&quot;include.schema.changes&quot;</span>: <span class="string">&quot;true&quot;</span>,
+            <span class="string">&quot;value.converter&quot;</span>: <span class="string">&quot;org.apache.kafka.connect.json.JsonConverter&quot;</span>,
+            <span class="string">&quot;value.converter.schemas.enable&quot;</span>: <span class="string">&quot;false&quot;</span>,
+            <span class="string">&quot;key.converter&quot;</span>: <span class="string">&quot;org.apache.kafka.connect.json.JsonConverter&quot;</span>,
+            <span class="string">&quot;key.converter.schemas.enable&quot;</span>: <span class="string">&quot;false&quot;</span>,
+            <span class="string">&quot;transforms&quot;</span>: <span class="string">&quot;unwrap,addTopicPrefix&quot;</span>,
+            <span class="string">&quot;transforms.unwrap.type&quot;</span>: <span class="string">&quot;io.debezium.transforms.ExtractNewRecordState&quot;</span>,
+            <span class="string">&quot;transforms.addTopicPrefix.type&quot;</span>:<span class="string">&quot;org.apache.kafka.connect.transforms.RegexRouter&quot;</span>,
+            <span class="string">&quot;transforms.addTopicPrefix.regex&quot;</span>:<span class="string">&quot;(.*)&quot;</span>,
+            <span class="string">&quot;transforms.addTopicPrefix.replacement&quot;</span>:<span class="string">&quot;mysql-debezium-json-no-schema-$1&quot;</span>,
+            <span class="string">&quot;database.allowPublicKeyRetrieval&quot;</span>: <span class="string">&quot;true&quot;</span>
+       }
+    })
+
+
+
+<span class="function">@app.post(&quot;/sendodd/{game_id}&quot;)</span>
+<span class="keyword">def</span> <span class="function">read_root</span>(<span class="variable">game_id</span>: <span class="type">str</span>):
+    <span class="variable">mycursor</span> <span class="operator">=</span> <span class="variable">mydb</span>.<span class="function method">cursor</span>()
+
+    <span class="variable">odd1</span> <span class="operator">=</span> <span class="function">round</span>(<span class="variable">random</span>.<span class="function method">random</span>() <span class="operator">*</span> <span class="number">5</span>, <span class="number">2</span>)
+    <span class="variable">odd2</span> <span class="operator">=</span> <span class="function">round</span>(<span class="variable">random</span>.<span class="function method">random</span>() <span class="operator">*</span> <span class="number">5</span>, <span class="number">2</span>)
+    <span class="variable">odd3</span> <span class="operator">=</span> <span class="function">round</span>(<span class="variable">random</span>.<span class="function method">random</span>() <span class="operator">*</span> <span class="number">5</span>, <span class="number">2</span>)
+    <span class="variable">odd4</span> <span class="operator">=</span> <span class="function">round</span>(<span class="variable">random</span>.<span class="function method">random</span>() <span class="operator">*</span> <span class="number">5</span>, <span class="number">2</span>)
+    <span class="variable">odd5</span> <span class="operator">=</span> <span class="function">round</span>(<span class="variable">random</span>.<span class="function method">random</span>() <span class="operator">*</span> <span class="number">5</span>, <span class="number">2</span>)
+
+    <span class="variable">sql</span> <span class="operator">=</span> <span class="string">f&apos;INSERT INTO game_{game_id} (game_id, odd1, odd2, odd3, odd4, odd5) VALUES ({game_id}, {str(odd1)}, {str(odd2)}, {str(odd3)}, {str(odd4)}, {str(odd5)})&apos;</span>
+
+    <span class="variable">mycursor</span>.<span class="function method">execute</span>(<span class="variable">sql</span>)
+
+    <span class="variable">mydb</span>.<span class="function method">commit</span>()
+
+    <span class="function">print</span>(<span class="variable">mycursor</span>.<span class="property">rowcount</span>, <span class="string">&quot;record inserted.&quot;</span>)
+
+    <span class="keyword">return</span> {<span class="string">&quot;game_id&quot;</span>: <span class="variable">game_id</span>, <span class="string">&quot;odd1&quot;</span>: <span class="variable">odd1</span>, <span class="string">&quot;odd2&quot;</span>: <span class="variable">odd2</span>, <span class="string">&quot;odd3&quot;</span>: <span class="variable">odd3</span>, <span class="string">&quot;odd4&quot;</span>: <span class="variable">odd4</span>, <span class="string">&quot;odd5&quot;</span> : <span class="variable">odd5</span>}
+
+</code></pre>
+<p>To get the IPs:</p><pre><code>docker inspect --format=&apos;{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}&apos; $(docker ps -aq --filter &quot;name=mysql&quot;)
+
+docker inspect --format=&apos;{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}&apos; $(docker ps -aq --filter &quot;name=kafka&quot;)
+
+docker inspect --format=&apos;{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}&apos; $(docker ps -aq --filter &quot;name=kafka-connect&quot;)
+</code></pre><p>Containerazing it with Docker</p><pre><code>FROM python:3.9
+
+WORKDIR /code
+
+COPY ./requirements.txt /code/requirements.txt
+
+RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
+
+COPY ./app /code/app
+
+CMD [&quot;fastapi&quot;, &quot;run&quot;, &quot;app/main.py&quot;, &quot;--port&quot;, &quot;80&quot;]
+</code></pre><p>and building the project:</p><pre><code>docker build -t fastapi-image . &amp;&amp; docker run -d --name fastapi-container -p 80:80 --net websockets_default fastapi-image
+</code></pre><p>Finally, testing it:</p><pre><code>curl -X POST &quot;localhost:80/sendodd/123122&quot;
+</code></pre><h2>The docker-compose file</h2><pre><code class="bash"><span class="constant">services:</span>
+  <span class="constant">zookeeper:</span>
+    <span class="constant">image:</span> <span class="constant">confluentinc/cp-zookeeper:7.8.0</span>
+    <span class="constant">container_name:</span> <span class="constant">zookeeper</span>
+    <span class="constant">ports:</span>
+      <span class="constant">-</span> <span class="constant">&quot;2181:2181&quot;</span>
+    <span class="constant">environment:</span>
+      <span class="constant">ZOOKEEPER_CLIENT_PORT:</span> <span class="constant">2181</span>
+
+  <span class="constant">kafka:</span>
+    <span class="constant">image:</span> <span class="constant">confluentinc/cp-kafka:7.8.0</span>
+    <span class="constant">container_name:</span> <span class="constant">kafka</span>
+    <span class="constant">ports:</span>
+      <span class="constant">-</span> <span class="constant">&quot;9092:9092&quot;</span>
+    <span class="constant">environment:</span>
+      <span class="constant">KAFKA_BROKER_ID:</span> <span class="constant">1</span>
+      <span class="constant">KAFKA_ZOOKEEPER_CONNECT:</span> <span class="constant">zookeeper:2181</span>
+      <span class="constant">KAFKA_LISTENER_SECURITY_PROTOCOL_MAP:</span> <span class="constant">PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT</span>
+      <span class="constant">KAFKA_INTER_BROKER_LISTENER_NAME:</span> <span class="constant">PLAINTEXT</span>
+      <span class="constant">KAFKA_ADVERTISED_LISTENERS:</span> <span class="constant">PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092</span>
+      <span class="constant">KAFKA_AUTO_CREATE_TOPICS_ENABLE:</span> <span class="constant">&quot;true&quot;</span>
+      <span class="constant">KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR:</span> <span class="constant">1</span>
+      <span class="constant">KAFKA_TRANSACTION_STATE_LOG_MIN_ISR:</span> <span class="constant">1</span>
+      <span class="constant">KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR:</span> <span class="constant">1</span>
+      <span class="constant">KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS:</span> <span class="constant">100</span>
+    <span class="constant">depends_on:</span>
+      <span class="constant">-</span> <span class="constant">zookeeper</span>
+
+  <span class="constant">mysql:</span>
+    <span class="constant">image:</span> <span class="constant">mysql:8.0</span>
+    <span class="constant">container_name:</span> <span class="constant">mysql</span>
+    <span class="constant">ports:</span>
+      <span class="constant">-</span> <span class="constant">3306:3306</span>
+    <span class="constant">environment:</span>
+     - <span class="property">MYSQL_ROOT_PASSWORD</span>=debezium
+     - <span class="property">MYSQL_USER</span>=mysqluser
+     - <span class="property">MYSQL_PASSWORD</span>=mysqlpw
+    <span class="constant">volumes:</span>
+     <span class="constant">-</span> <span class="constant">${PWD}/data/mysql:/docker-entrypoint-initdb.d</span>
+     <span class="constant">-</span> <span class="constant">${PWD}/data:/data</span>
+     <span class="constant">-</span> <span class="constant">./mysql-init:/docker-entrypoint-initdb.d</span>
+  <span class="constant">schema-registry:</span>
+    <span class="constant">image:</span> <span class="constant">confluentinc/cp-schema-registry:7.8.0</span>
+    <span class="constant">container_name:</span> <span class="constant">schema-registry</span>
+    <span class="constant">ports:</span>
+      <span class="constant">-</span> <span class="constant">&quot;8081:8081&quot;</span>
+    <span class="constant">depends_on:</span>
+      <span class="constant">-</span> <span class="constant">kafka</span>
+    <span class="constant">environment:</span>
+      <span class="constant">SCHEMA_REGISTRY_HOST_NAME:</span> <span class="constant">schema-registry</span>
+      <span class="constant">SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS:</span> <span class="constant">kafka:29092</span>
+  <span class="constant">kafka-connect:</span>
+    <span class="constant">image:</span> <span class="constant">confluentinc/cp-kafka-connect-base:7.8.0</span>
+    <span class="constant">container_name:</span> <span class="constant">kafka-connect</span>
+    <span class="constant">depends_on:</span>
+      <span class="constant">-</span> <span class="constant">kafka</span>
+      <span class="constant">-</span> <span class="constant">schema-registry</span>
+    <span class="constant">ports:</span>
+      <span class="constant">-</span> <span class="constant">8083:8083</span>
+    <span class="constant">environment:</span>
+      <span class="constant">CONNECT_BOOTSTRAP_SERVERS:</span> <span class="constant">&quot;kafka:29092&quot;</span>
+      <span class="constant">CONNECT_REST_PORT:</span> <span class="constant">8083</span>
+      <span class="constant">CONNECT_GROUP_ID:</span> <span class="constant">kafka-connect</span>
+      <span class="constant">CONNECT_CONFIG_STORAGE_TOPIC:</span> <span class="constant">_connect-configs</span>
+      <span class="constant">CONNECT_OFFSET_STORAGE_TOPIC:</span> <span class="constant">_connect-offsets</span>
+      <span class="constant">CONNECT_STATUS_STORAGE_TOPIC:</span> <span class="constant">_connect-status</span>
+      <span class="constant">CONNECT_KEY_CONVERTER:</span> <span class="constant">org.apache.kafka.connect.storage.StringConverter</span>
+      <span class="constant">CONNECT_VALUE_CONVERTER:</span> <span class="constant">io.confluent.connect.avro.AvroConverter</span>
+      <span class="constant">CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL:</span> <span class="constant">&apos;http://schema-registry:8081&apos;</span>
+      <span class="constant">CONNECT_REST_ADVERTISED_HOST_NAME:</span> <span class="constant">&quot;kafka-connect&quot;</span>
+      <span class="constant">CONNECT_LOG4J_APPENDER_STDOUT_LAYOUT_CONVERSIONPATTERN:</span> <span class="constant">&quot;[%d] %p %X{connector.context}%m (%c:%L)%n&quot;</span>
+      <span class="constant">CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR:</span> <span class="constant">&quot;1&quot;</span>
+      <span class="constant">CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR:</span> <span class="constant">&quot;1&quot;</span>
+      <span class="constant">CONNECT_STATUS_STORAGE_REPLICATION_FACTOR:</span> <span class="constant">&quot;1&quot;</span>
+      <span class="constant">CONNECT_PLUGIN_PATH:</span> <span class="constant">/usr/share/java,/usr/share/confluent-hub-components,/data/connect-jars</span>
+    <span class="constant">volumes:</span>
+      <span class="constant">-</span> <span class="constant">$PWD/data:/data</span>
+    <span class="constant">command:</span>
+      <span class="constant">-</span> <span class="constant">bash</span>
+      <span class="constant">-</span> <span class="constant">-c</span>
+      <span class="constant">-</span> <span class="operator">|</span>
+        <span class="constant">echo</span> <span class="constant">&quot;Installing Connector&quot;</span>
+        <span class="constant">confluent-hub</span> <span class="constant">install</span> <span class="constant">--no-prompt</span> <span class="constant">debezium/debezium-connector-mysql:1.7.0</span>
+        <span class="comment">#</span>
+        <span class="constant">echo</span> <span class="constant">&quot;Launching Kafka Connect worker&quot;</span>
+        <span class="constant">/etc/confluent/docker/run</span> &amp;
+        <span class="comment">#</span>
+        <span class="constant">sleep</span> <span class="constant">infinity</span>
+
+<span class="constant">networks:</span>
+  <span class="constant">my-network-name:</span>
+   <span class="constant">name:</span> <span class="constant">websockets</span>
+</code></pre>
+<h2>Setting up the database</h2><pre><code class="bash"><span class="constant">CREATE</span> <span class="constant">USER</span> <span class="constant">&apos;debezium&apos;@&apos;%&apos;</span> <span class="constant">IDENTIFIED</span> <span class="constant">BY</span> <span class="constant">&apos;dbz&apos;</span>;
+
+<span class="constant">GRANT</span> <span class="constant">ALL</span> <span class="constant">PRIVILEGES</span> <span class="constant">ON</span> <span class="constant">*.*</span> <span class="constant">TO</span> <span class="constant">&apos;debezium&apos;@&apos;%&apos;</span> <span class="constant">WITH</span> <span class="constant">GRANT</span> <span class="constant">OPTION</span>;
+
+<span class="constant">FLUSH</span> <span class="constant">PRIVILEGES</span>;
+
+
+<span class="constant">CREATE</span> <span class="constant">DATABASE</span> <span class="constant">IF</span> <span class="constant">NOT</span> <span class="constant">EXISTS</span> <span class="constant">gameodds</span>;
+
+<span class="constant">USE</span> <span class="constant">gameodds</span>;
+
+<span class="constant">CREATE</span> <span class="constant">TABLE</span> <span class="constant">IF</span> <span class="constant">NOT</span> <span class="constant">EXISTS</span> <span class="constant">available_games</span> (
+    <span class="constant">row_id</span> <span class="constant">INT</span> <span class="constant">AUTO_INCREMENT</span> <span class="constant">PRIMARY</span> <span class="constant">KEY,</span>
+    <span class="constant">game_id</span> VARCHAR<span class="constant">(50)</span> <span class="constant">NOT</span> <span class="constant">NULL,</span>
+    <span class="constant">game_id_name</span> VARCHAR<span class="constant">(50)</span> <span class="constant">NOT</span> <span class="constant">NULL,</span>
+    <span class="constant">connector_name</span> VARCHAR<span class="constant">(100)</span> <span class="constant">NOT</span> <span class="constant">NULL,</span>
+    <span class="constant">created_at</span> <span class="constant">TIMESTAMP</span> <span class="constant">DEFAULT</span> <span class="constant">CURRENT_TIMESTAMP</span>
+);
+</code></pre>
+<h2>Setting up Kafka Connector and debezium</h2><pre><code class="bash"><span class="constant">docker-compose</span> <span class="constant">up</span> <span class="constant">-f</span> <span class="constant">docker-compose.yml</span> <span class="constant">-d</span> 
+</code></pre>
+<h2>JS Websocket server</h2><p>The first thing we’ll need is the websocket server, which will receive the messages from the Kafka topic and send them to all the websocket clients.</p><pre><code class="bash"><span class="constant">cd</span> <span class="constant">websocket_server</span>
+<span class="constant">npm</span> <span class="constant">init</span>
+
+<span class="constant">npm</span> <span class="constant">install</span> <span class="constant">ws@8.18.0</span> <span class="constant">uuid@11.0.4</span>
+</code></pre>
+<p>The following code creates a websocket server and a variable called <code>raw_odds</code>, the one which will store what comes from the Kafka topic.</p><pre><code class="javascript"><span class="keyword">const</span> <span class="variable">WebSocket</span> <span class="operator">=</span> <span class="function">require</span><span class="punctuation bracket">(</span><span class="string">&quot;ws&quot;</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+<span class="keyword">const</span> <span class="variable">uuidv4</span> <span class="operator">=</span> <span class="function">require</span><span class="punctuation bracket">(</span><span class="string">&quot;uuid&quot;</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">.</span><span class="property">v4</span><span class="punctuation delimiter">;</span>
+<span class="keyword">var</span> <span class="variable">mysql</span> <span class="operator">=</span> <span class="function">require</span><span class="punctuation bracket">(</span><span class="string">&quot;mysql2&quot;</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+<span class="keyword">const</span> <span class="variable">MYSQL_IP</span> <span class="operator">=</span> <span class="string">&quot;172.18.0.2&quot;</span><span class="punctuation delimiter">;</span>
+<span class="keyword">const</span> <span class="variable">KAFKA_IP</span> <span class="operator">=</span> <span class="string">&quot;172.18.0.4&quot;</span><span class="punctuation delimiter">;</span>
+
+<span class="keyword">let</span> <span class="variable">connection_names</span> <span class="operator">=</span> <span class="punctuation bracket">[</span><span class="punctuation bracket">]</span><span class="punctuation delimiter">;</span>
+
+<span class="keyword">var</span> <span class="variable">con</span> <span class="operator">=</span> <span class="variable">mysql</span><span class="punctuation delimiter">.</span><span class="function method">createConnection</span><span class="punctuation bracket">(</span><span class="punctuation bracket">{</span>
+  <span class="property">host</span>: <span class="variable">MYSQL_IP</span><span class="punctuation delimiter">,</span>
+  <span class="property">port</span>: <span class="string">&quot;3306&quot;</span><span class="punctuation delimiter">,</span>
+  <span class="property">user</span>: <span class="string">&quot;debezium&quot;</span><span class="punctuation delimiter">,</span>
+  <span class="property">password</span>: <span class="string">&quot;dbz&quot;</span><span class="punctuation delimiter">,</span>
+  <span class="property">database</span>: <span class="string">&quot;gameodds&quot;</span><span class="punctuation delimiter">,</span>
+<span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+<span class="keyword">const</span> <span class="variable">wss</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="variable">WebSocket</span><span class="punctuation delimiter">.</span><span class="property">Server</span><span class="punctuation bracket">(</span><span class="punctuation bracket">{</span> <span class="property">port</span>: <span class="number">81</span> <span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+<span class="keyword">const</span> <span class="punctuation bracket">{</span> <span class="constant">Kafka</span> <span class="punctuation bracket">}</span> <span class="operator">=</span> <span class="function">require</span><span class="punctuation bracket">(</span><span class="string">&quot;kafkajs&quot;</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+<span class="variable">console</span><span class="punctuation delimiter">.</span><span class="function method">log</span><span class="punctuation bracket">(</span><span class="string">&quot;Server running&quot;</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+<span class="keyword">const</span> <span class="variable">clients</span> <span class="operator">=</span> <span class="punctuation bracket">{</span><span class="punctuation bracket">}</span><span class="punctuation delimiter">;</span>
+<span class="keyword">var</span> <span class="variable">last_odds</span> <span class="operator">=</span> <span class="punctuation bracket">{</span><span class="punctuation bracket">}</span><span class="punctuation delimiter">;</span>
+
+<span class="keyword">const</span> <span class="variable">kafka</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="variable">Kafka</span><span class="punctuation bracket">(</span><span class="punctuation bracket">{</span>
+  <span class="property">brokers</span>: <span class="punctuation bracket">[</span><span class="string">`${KAFKA_IP}:29092`</span><span class="punctuation bracket">]</span><span class="punctuation delimiter">,</span>
+<span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+<span class="keyword">const</span> <span class="variable">consumer</span> <span class="operator">=</span> <span class="variable">kafka</span><span class="punctuation delimiter">.</span><span class="function method">consumer</span><span class="punctuation bracket">(</span><span class="punctuation bracket">{</span> <span class="property">groupId</span>: <span class="string">&quot;group-1&quot;</span> <span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+<span class="variable">con</span><span class="punctuation delimiter">.</span><span class="function method">connect</span><span class="punctuation bracket">(</span><span class="keyword">function</span> <span class="punctuation bracket">(</span><span class="variable">err</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">{</span>
+  <span class="keyword">if</span> <span class="punctuation bracket">(</span><span class="variable">err</span><span class="punctuation bracket">)</span> <span class="keyword">throw</span> <span class="variable">err</span><span class="punctuation delimiter">;</span>
+  <span class="variable">con</span><span class="punctuation delimiter">.</span><span class="function method">query</span><span class="punctuation bracket">(</span>
+    <span class="string">&quot;SELECT connector_name FROM available_games&quot;</span><span class="punctuation delimiter">,</span>
+    <span class="keyword">function</span> <span class="punctuation bracket">(</span><span class="variable">err</span><span class="punctuation delimiter">,</span> <span class="variable">result</span><span class="punctuation delimiter">,</span> <span class="variable">fields</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">{</span>
+      <span class="keyword">if</span> <span class="punctuation bracket">(</span><span class="variable">err</span><span class="punctuation bracket">)</span> <span class="keyword">throw</span> <span class="variable">err</span><span class="punctuation delimiter">;</span>
+      <span class="variable">console</span><span class="punctuation delimiter">.</span><span class="function method">log</span><span class="punctuation bracket">(</span><span class="string">`c3: ${result}`</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+      <span class="keyword">var</span> <span class="variable">values</span> <span class="operator">=</span> <span class="variable">result</span><span class="punctuation delimiter">.</span><span class="function method">map</span><span class="punctuation bracket">(</span><span class="punctuation bracket">(</span><span class="variable">item</span><span class="punctuation bracket">)</span> <span class="operator">=&gt;</span> <span class="variable">item</span><span class="punctuation delimiter">.</span><span class="property">connector_name</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+      <span class="variable">connection_names</span> <span class="operator">=</span> <span class="variable">values</span><span class="punctuation delimiter">;</span>
+      <span class="variable">console</span><span class="punctuation delimiter">.</span><span class="function method">log</span><span class="punctuation bracket">(</span><span class="string">`c4: ${connection_names}`</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+      <span class="function">run</span><span class="punctuation bracket">(</span><span class="variable">connection_names</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">.</span><span class="function method">catch</span><span class="punctuation bracket">(</span><span class="variable">console</span><span class="punctuation delimiter">.</span><span class="property">error</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+    <span class="punctuation bracket">}</span>
+  <span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+<span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+<span class="keyword">var</span> <span class="variable">last_odds</span> <span class="operator">=</span> <span class="punctuation bracket">{</span><span class="punctuation bracket">}</span><span class="punctuation delimiter">;</span>
+
+<span class="keyword">const</span> <span class="variable">run</span> <span class="operator">=</span> <span class="keyword">async</span> <span class="punctuation bracket">(</span><span class="variable">connection_names</span><span class="punctuation bracket">)</span> <span class="operator">=&gt;</span> <span class="punctuation bracket">{</span>
+  <span class="keyword">await</span> <span class="variable">consumer</span><span class="punctuation delimiter">.</span><span class="function method">connect</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+  <span class="variable">console</span><span class="punctuation delimiter">.</span><span class="function method">log</span><span class="punctuation bracket">(</span><span class="string">`c2: ${connection_names}`</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+  <span class="keyword">await</span> <span class="variable">connection_names</span><span class="punctuation delimiter">.</span><span class="function method">forEach</span><span class="punctuation bracket">(</span><span class="punctuation bracket">(</span><span class="variable">item</span><span class="punctuation bracket">)</span> <span class="operator">=&gt;</span> <span class="punctuation bracket">{</span>
+    <span class="variable">console</span><span class="punctuation delimiter">.</span><span class="function method">log</span><span class="punctuation bracket">(</span><span class="string">`connecting: ${item}`</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+    <span class="variable">consumer</span><span class="punctuation delimiter">.</span><span class="function method">subscribe</span><span class="punctuation bracket">(</span><span class="punctuation bracket">{</span>
+      <span class="property">topics</span>: <span class="punctuation bracket">[</span><span class="variable">item</span><span class="punctuation bracket">]</span><span class="punctuation delimiter">,</span>
+      <span class="property">fromBeginning</span>: <span class="constant builtin">false</span><span class="punctuation delimiter">,</span>
+    <span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+  <span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+  <span class="keyword">await</span> <span class="variable">consumer</span><span class="punctuation delimiter">.</span><span class="function method">run</span><span class="punctuation bracket">(</span><span class="punctuation bracket">{</span>
+    <span class="property">eachMessage</span>: <span class="keyword">async</span> <span class="punctuation bracket">(</span><span class="punctuation bracket">{</span> <span class="constant">topic</span><span class="punctuation delimiter">,</span> <span class="constant">partition</span><span class="punctuation delimiter">,</span> <span class="constant">message</span> <span class="punctuation bracket">}</span><span class="punctuation bracket">)</span> <span class="operator">=&gt;</span> <span class="punctuation bracket">{</span>
+      <span class="variable">console</span><span class="punctuation delimiter">.</span><span class="function method">log</span><span class="punctuation bracket">(</span><span class="punctuation bracket">{</span>
+        <span class="property">value</span>: <span class="variable">message</span><span class="punctuation delimiter">.</span><span class="property">value</span><span class="punctuation delimiter">.</span><span class="function method">toString</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">,</span>
+        <span class="constant">topic</span><span class="punctuation delimiter">,</span>
+        <span class="constant">partition</span><span class="punctuation delimiter">,</span>
+      <span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+      <span class="variable">last_odds</span> <span class="operator">=</span> <span class="variable">JSON</span><span class="punctuation delimiter">.</span><span class="function method">parse</span><span class="punctuation bracket">(</span><span class="variable">message</span><span class="punctuation delimiter">.</span><span class="property">value</span><span class="punctuation delimiter">.</span><span class="function method">toString</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+    <span class="punctuation bracket">}</span><span class="punctuation delimiter">,</span>
+  <span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+<span class="punctuation bracket">}</span><span class="punctuation delimiter">;</span>
+
+<span class="variable">wss</span><span class="punctuation delimiter">.</span><span class="function method">on</span><span class="punctuation bracket">(</span><span class="string">&quot;connection&quot;</span><span class="punctuation delimiter">,</span> <span class="punctuation bracket">(</span><span class="variable">ws</span><span class="punctuation bracket">)</span> <span class="operator">=&gt;</span> <span class="punctuation bracket">{</span>
+  <span class="variable">console</span><span class="punctuation delimiter">.</span><span class="function method">log</span><span class="punctuation bracket">(</span><span class="string">&quot;Client connected&quot;</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+  <span class="keyword">const</span> <span class="variable">userId</span> <span class="operator">=</span> <span class="function">uuidv4</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+  <span class="variable">console</span><span class="punctuation delimiter">.</span><span class="function method">log</span><span class="punctuation bracket">(</span><span class="string">&quot;Received a new connection&quot;</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+  <span class="variable">clients</span><span class="punctuation bracket">[</span><span class="variable">userId</span><span class="punctuation bracket">]</span> <span class="operator">=</span> <span class="variable">ws</span><span class="punctuation delimiter">;</span>
+
+  <span class="variable">ws</span><span class="punctuation delimiter">.</span><span class="function method">send</span><span class="punctuation bracket">(</span><span class="string">`${userId}`</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+  <span class="variable">ws</span><span class="punctuation delimiter">.</span><span class="function method">on</span><span class="punctuation bracket">(</span><span class="string">&quot;close&quot;</span><span class="punctuation delimiter">,</span> <span class="punctuation bracket">(</span><span class="punctuation bracket">)</span> <span class="operator">=&gt;</span> <span class="punctuation bracket">{</span>
+    <span class="variable">console</span><span class="punctuation delimiter">.</span><span class="function method">log</span><span class="punctuation bracket">(</span><span class="string">&quot;Client disconnected&quot;</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+  <span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+<span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+<span class="keyword">function</span> <span class="function">update</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">{</span>
+  <span class="variable">console</span><span class="punctuation delimiter">.</span><span class="function method">log</span><span class="punctuation bracket">(</span><span class="variable">last_odds</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+  <span class="variable">console</span><span class="punctuation delimiter">.</span><span class="function method">log</span><span class="punctuation bracket">(</span><span class="variable">connection_names</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+  <span class="variable">wss</span><span class="punctuation delimiter">.</span><span class="property">clients</span><span class="punctuation delimiter">.</span><span class="function method">forEach</span><span class="punctuation bracket">(</span><span class="punctuation bracket">(</span><span class="variable">client</span><span class="punctuation bracket">)</span> <span class="operator">=&gt;</span> <span class="punctuation bracket">{</span>
+    <span class="keyword">if</span> <span class="punctuation bracket">(</span><span class="variable">client</span><span class="punctuation delimiter">.</span><span class="property">readyState</span> <span class="operator">===</span> <span class="variable">WebSocket</span><span class="punctuation delimiter">.</span><span class="property">OPEN</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">{</span>
+      <span class="variable">client</span><span class="punctuation delimiter">.</span><span class="function method">send</span><span class="punctuation bracket">(</span><span class="variable">JSON</span><span class="punctuation delimiter">.</span><span class="function method">stringify</span><span class="punctuation bracket">(</span><span class="variable">last_odds</span><span class="punctuation bracket">)</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+    <span class="punctuation bracket">}</span>
+  <span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+<span class="punctuation bracket">}</span>
+
+<span class="keyword">const</span> <span class="variable">intervalId</span> <span class="operator">=</span> <span class="function">setInterval</span><span class="punctuation bracket">(</span><span class="variable">update</span><span class="punctuation delimiter">,</span> <span class="number">5000</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+</code></pre>
+<p>In the utils/ folder of the project, a test can be performed. It will just open a connection, send a websocket message to the server and then close it. The test_websocket.js:</p><pre><code class="javascript"><span class="keyword">import</span> <span class="variable">WebSocket</span> <span class="keyword">from</span> <span class="string">&apos;ws&apos;</span><span class="punctuation delimiter">;</span>
+
+<span class="keyword">var</span> <span class="variable">user</span> <span class="operator">=</span> <span class="punctuation bracket">{</span>
+    <span class="property">clientId</span>: <span class="string">&apos;&apos;</span><span class="punctuation delimiter">,</span>
+    <span class="property">data</span>: <span class="punctuation bracket">{</span><span class="string">&apos;payload&apos;</span>: <span class="punctuation bracket">{</span><span class="string">&apos;odd1&apos;</span>: <span class="number">1.2</span><span class="punctuation bracket">}</span><span class="punctuation bracket">}</span> 
+  <span class="punctuation bracket">}</span>
+
+<span class="keyword">const</span> <span class="variable">wss</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="variable">WebSocket</span><span class="punctuation bracket">(</span><span class="string">&apos;ws://localhost:8080&apos;</span><span class="punctuation delimiter">,</span> <span class="punctuation bracket">{</span>
+  <span class="property">perMessageDeflate</span>: <span class="constant builtin">false</span>
+<span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+<span class="variable">wss</span><span class="punctuation delimiter">.</span><span class="function method">on</span><span class="punctuation bracket">(</span><span class="string">&apos;open&apos;</span><span class="punctuation delimiter">,</span> <span class="keyword">function</span> <span class="function">open</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">{</span>
+    <span class="variable">wss</span><span class="punctuation delimiter">.</span><span class="function method">send</span><span class="punctuation bracket">(</span><span class="string">&apos;{}&apos;</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+  <span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+<span class="variable">wss</span><span class="punctuation delimiter">.</span><span class="function method">on</span><span class="punctuation bracket">(</span><span class="string">&apos;message&apos;</span><span class="punctuation delimiter">,</span> <span class="keyword">function</span> <span class="function">message</span><span class="punctuation bracket">(</span><span class="variable">event</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">{</span>
+
+    <span class="keyword">if</span> <span class="punctuation bracket">(</span><span class="variable">user</span><span class="punctuation delimiter">.</span><span class="property">clientId</span> <span class="operator">===</span> <span class="string">&apos;&apos;</span><span class="punctuation bracket">)</span><span class="punctuation bracket">{</span>
+      <span class="variable">user</span><span class="punctuation bracket">[</span><span class="string">&apos;clientId&apos;</span><span class="punctuation bracket">]</span> <span class="operator">=</span> <span class="variable">event</span><span class="punctuation delimiter">.</span><span class="function method">toString</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+    <span class="punctuation bracket">}</span>
+    <span class="variable">console</span><span class="punctuation delimiter">.</span><span class="function method">log</span><span class="punctuation bracket">(</span><span class="variable">user</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+  <span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+<span class="keyword">function</span> <span class="function">sendMessage</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span><span class="punctuation bracket">{</span>
+    <span class="keyword">const</span> <span class="variable">message</span> <span class="operator">=</span> <span class="variable">JSON</span><span class="punctuation delimiter">.</span><span class="function method">stringify</span><span class="punctuation bracket">(</span><span class="variable">user</span><span class="punctuation delimiter">.</span><span class="property">data</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+    <span class="variable">wss</span><span class="punctuation delimiter">.</span><span class="function method">send</span><span class="punctuation bracket">(</span><span class="variable">message</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+    <span class="variable">wss</span><span class="punctuation delimiter">.</span><span class="function method">close</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+<span class="punctuation bracket">}</span>
+<span class="function">setTimeout</span><span class="punctuation bracket">(</span>      
+    <span class="variable">sendMessage</span><span class="punctuation delimiter">,</span> <span class="number">2000</span>
+<span class="punctuation bracket">)</span>
+</code></pre>
+<p>To run it, the server must be running first:</p><pre><code class="bash"><span class="constant">node</span> <span class="constant">websocket-server/index.js</span>
+</code></pre>
+<p>Then the test can be performed:</p><pre><code class="bash"><span class="constant">node</span> <span class="constant">test_websocket.js</span>
+</code></pre>
+<pre><code>FROM node:22
+
+WORKDIR /usr/src/app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+EXPOSE 3000
+
+CMD [&quot;node&quot;, &quot;index.js&quot;]
+</code></pre><h2>JS Websocket client</h2><p>For the client, we’ll use React. Creating the project in the websocket_client folder create-react-app@5.0.1, web-vitals@4.2.4 and ws@8.18.0.</p><p><img src="/blog/websockets-kafka/final.png" width="1342" height="642"></p><p>The App.js will be:</p><pre><code class="javascript"><span class="keyword">import</span> <span class="string">&apos;./App.css&apos;</span><span class="punctuation delimiter">;</span>
+
+<span class="keyword">import</span> <span class="variable">React</span><span class="punctuation delimiter">,</span> <span class="punctuation bracket">{</span> <span class="variable">useEffect</span><span class="punctuation delimiter">,</span> <span class="variable">useState</span> <span class="punctuation bracket">}</span> <span class="keyword">from</span> <span class="string">&apos;react&apos;</span><span class="punctuation delimiter">;</span>
+
+
+<span class="keyword">const</span> <span class="variable">WEBSOCKETSERVER_IP</span> <span class="operator">=</span> <span class="string">&quot;127.0.0.1&quot;</span><span class="punctuation delimiter">;</span>
+<span class="keyword">const</span> <span class="variable">socket</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="variable">WebSocket</span><span class="punctuation bracket">(</span><span class="string">`ws://${WEBSOCKETSERVER_IP}:81`</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+<span class="keyword">var</span> <span class="variable">user</span> <span class="operator">=</span> <span class="punctuation bracket">{</span>
+  <span class="property">clientId</span>: <span class="string">&apos;&apos;</span>
+<span class="punctuation bracket">}</span>
+
+<span class="keyword">const</span> <span class="variable">OutputComponent</span> <span class="operator">=</span> <span class="punctuation bracket">(</span><span class="punctuation bracket">{</span> <span class="constant">messages</span> <span class="punctuation bracket">}</span><span class="punctuation bracket">)</span> <span class="operator">=&gt;</span> <span class="punctuation bracket">{</span>
+  <span class="keyword">return</span> <span class="punctuation bracket">(</span>
+    <span class="operator">&lt;</span><span class="variable">div</span> <span class="property">id</span><span class="operator">=</span><span class="string">&quot;output&quot;</span><span class="operator">&gt;</span>
+      <span class="punctuation bracket">{</span><span class="variable">messages</span><span class="punctuation delimiter">.</span><span class="function method">map</span><span class="punctuation bracket">(</span><span class="punctuation bracket">(</span><span class="variable">game</span><span class="punctuation delimiter">,</span> <span class="variable">index</span><span class="punctuation bracket">)</span> <span class="operator">=&gt;</span> <span class="punctuation bracket">(</span>
+        <span class="operator">&lt;</span><span class="variable">div</span> <span class="property">key</span><span class="operator">=</span><span class="punctuation bracket">{</span><span class="variable">index</span><span class="punctuation bracket">}</span> <span class="property">className</span><span class="operator">=</span><span class="string">&quot;container&quot;</span><span class="operator">&gt;</span>
+          <span class="operator">&lt;</span><span class="variable">ul</span> <span class="property">className</span><span class="operator">=</span><span class="string">&quot;list&quot;</span><span class="operator">&gt;</span>
+            <span class="operator">&lt;</span><span class="variable">li</span><span class="operator">&gt;</span>
+              <span class="operator">&lt;</span><span class="variable">div</span><span class="operator">&gt;</span>Game ID: <span class="punctuation bracket">{</span><span class="variable">game</span><span class="punctuation delimiter">.</span><span class="property">game_id</span><span class="punctuation bracket">}</span>&lt;/<span class="variable">div</span><span class="operator">&gt;</span>
+              <span class="operator">&lt;</span><span class="variable">div</span><span class="operator">&gt;</span>Odd 1: <span class="punctuation bracket">{</span><span class="variable">game</span><span class="punctuation delimiter">.</span><span class="property">odd1</span><span class="punctuation delimiter">.</span><span class="function method">toFixed</span><span class="punctuation bracket">(</span><span class="number">4</span><span class="punctuation bracket">)</span><span class="punctuation bracket">}</span>&lt;/<span class="variable">div</span><span class="operator">&gt;</span>
+              <span class="operator">&lt;</span><span class="variable">div</span><span class="operator">&gt;</span>Odd 2: <span class="punctuation bracket">{</span><span class="variable">game</span><span class="punctuation delimiter">.</span><span class="property">odd2</span><span class="punctuation delimiter">.</span><span class="function method">toFixed</span><span class="punctuation bracket">(</span><span class="number">4</span><span class="punctuation bracket">)</span><span class="punctuation bracket">}</span>&lt;/<span class="variable">div</span><span class="operator">&gt;</span>
+              <span class="operator">&lt;</span><span class="variable">div</span><span class="operator">&gt;</span>Odd 3: <span class="punctuation bracket">{</span><span class="variable">game</span><span class="punctuation delimiter">.</span><span class="property">odd3</span><span class="punctuation delimiter">.</span><span class="function method">toFixed</span><span class="punctuation bracket">(</span><span class="number">4</span><span class="punctuation bracket">)</span><span class="punctuation bracket">}</span>&lt;/<span class="variable">div</span><span class="operator">&gt;</span>
+              <span class="operator">&lt;</span><span class="variable">div</span><span class="operator">&gt;</span>Odd 4: <span class="punctuation bracket">{</span><span class="variable">game</span><span class="punctuation delimiter">.</span><span class="property">odd4</span><span class="punctuation delimiter">.</span><span class="function method">toFixed</span><span class="punctuation bracket">(</span><span class="number">4</span><span class="punctuation bracket">)</span><span class="punctuation bracket">}</span>&lt;/<span class="variable">div</span><span class="operator">&gt;</span>
+              <span class="operator">&lt;</span><span class="variable">div</span><span class="operator">&gt;</span>Odd 5: <span class="punctuation bracket">{</span><span class="variable">game</span><span class="punctuation delimiter">.</span><span class="property">odd5</span><span class="punctuation delimiter">.</span><span class="function method">toFixed</span><span class="punctuation bracket">(</span><span class="number">4</span><span class="punctuation bracket">)</span><span class="punctuation bracket">}</span>&lt;/<span class="variable">div</span><span class="operator">&gt;</span>
+            &lt;/<span class="variable">li</span><span class="operator">&gt;</span>
+          &lt;/<span class="variable">ul</span><span class="operator">&gt;</span>
+        &lt;/<span class="variable">div</span><span class="operator">&gt;</span>
+      <span class="punctuation bracket">)</span><span class="punctuation bracket">)</span><span class="punctuation bracket">}</span>
+    &lt;/<span class="variable">div</span><span class="operator">&gt;</span>
+  <span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+<span class="punctuation bracket">}</span><span class="punctuation delimiter">;</span>
+
+<span class="keyword">function</span> <span class="function">App</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">{</span>
+
+  <span class="keyword">const</span> <span class="punctuation bracket">[</span><span class="variable">message1</span><span class="punctuation delimiter">,</span> <span class="variable">setMessage1</span><span class="punctuation bracket">]</span> <span class="operator">=</span> <span class="function">useState</span><span class="punctuation bracket">(</span><span class="punctuation bracket">{</span><span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+  <span class="keyword">const</span> <span class="punctuation bracket">[</span><span class="variable">message2</span><span class="punctuation delimiter">,</span> <span class="variable">setMessage2</span><span class="punctuation bracket">]</span> <span class="operator">=</span> <span class="function">useState</span><span class="punctuation bracket">(</span><span class="punctuation bracket">{</span><span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+  <span class="keyword">const</span> <span class="punctuation bracket">[</span><span class="variable">game_ids</span><span class="punctuation delimiter">,</span> <span class="variable">setGameIds</span><span class="punctuation bracket">]</span> <span class="operator">=</span> <span class="function">useState</span><span class="punctuation bracket">(</span><span class="punctuation bracket">[</span><span class="punctuation bracket">]</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+  <span class="keyword">const</span> <span class="variable">messages</span> <span class="operator">=</span> <span class="punctuation bracket">[</span>
+    <span class="punctuation bracket">{</span> <span class="property">game_id</span>: <span class="string">&quot;12345&quot;</span><span class="punctuation delimiter">,</span> <span class="property">odd1</span>: <span class="number">2.5</span><span class="punctuation delimiter">,</span> <span class="property">odd2</span>: <span class="number">3.1</span><span class="punctuation delimiter">,</span> <span class="property">odd3</span>: <span class="number">4.0</span><span class="punctuation delimiter">,</span> <span class="property">odd4</span>: <span class="number">1.8</span><span class="punctuation delimiter">,</span> <span class="property">odd5</span>: <span class="number">5.2</span> <span class="punctuation bracket">}</span><span class="punctuation delimiter">,</span>
+    <span class="punctuation bracket">{</span> <span class="property">game_id</span>: <span class="string">&quot;67890&quot;</span><span class="punctuation delimiter">,</span> <span class="property">odd1</span>: <span class="number">1.5</span><span class="punctuation delimiter">,</span> <span class="property">odd2</span>: <span class="number">2.1</span><span class="punctuation delimiter">,</span> <span class="property">odd3</span>: <span class="number">3.0</span><span class="punctuation delimiter">,</span> <span class="property">odd4</span>: <span class="number">1.3</span><span class="punctuation delimiter">,</span> <span class="property">odd5</span>: <span class="number">4.2</span> <span class="punctuation bracket">}</span><span class="punctuation delimiter">,</span>
+    <span class="punctuation bracket">{</span> <span class="property">game_id</span>: <span class="string">&quot;54321&quot;</span><span class="punctuation delimiter">,</span> <span class="property">odd1</span>: <span class="number">3.5</span><span class="punctuation delimiter">,</span> <span class="property">odd2</span>: <span class="number">4.1</span><span class="punctuation delimiter">,</span> <span class="property">odd3</span>: <span class="number">5.0</span><span class="punctuation delimiter">,</span> <span class="property">odd4</span>: <span class="number">2.8</span><span class="punctuation delimiter">,</span> <span class="property">odd5</span>: <span class="number">6.2</span> <span class="punctuation bracket">}</span><span class="punctuation delimiter">,</span>
+  <span class="punctuation bracket">]</span><span class="punctuation delimiter">;</span>
+
+  <span class="function">useEffect</span><span class="punctuation bracket">(</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span> <span class="operator">=&gt;</span> <span class="punctuation bracket">{</span>
+
+    <span class="variable">socket</span><span class="punctuation delimiter">.</span><span class="property">onopen</span> <span class="operator">=</span> <span class="keyword">function</span> <span class="punctuation bracket">(</span><span class="variable">event</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">{</span>
+      <span class="variable">console</span><span class="punctuation delimiter">.</span><span class="function method">log</span><span class="punctuation bracket">(</span><span class="string">&apos;You are Connected to WebSocket Server&apos;</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+    <span class="punctuation bracket">}</span><span class="punctuation delimiter">;</span>
+    <span class="variable">socket</span><span class="punctuation delimiter">.</span><span class="property">onmessage</span> <span class="operator">=</span> <span class="keyword">function</span> <span class="punctuation bracket">(</span><span class="variable">event</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">{</span>
+
+      <span class="keyword">if</span> <span class="punctuation bracket">(</span><span class="variable">user</span><span class="punctuation delimiter">.</span><span class="property">clientId</span> <span class="operator">===</span> <span class="string">&apos;&apos;</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">{</span>
+        <span class="variable">user</span><span class="punctuation bracket">[</span><span class="string">&apos;clientId&apos;</span><span class="punctuation bracket">]</span> <span class="operator">=</span> <span class="variable">event</span><span class="punctuation delimiter">.</span><span class="property">data</span><span class="punctuation delimiter">;</span>
+        <span class="keyword">return</span><span class="punctuation delimiter">;</span>
+      <span class="punctuation bracket">}</span>
+
+      <span class="keyword">const</span> <span class="variable">payload</span> <span class="operator">=</span> <span class="variable">JSON</span><span class="punctuation delimiter">.</span><span class="function method">parse</span><span class="punctuation bracket">(</span><span class="variable">event</span><span class="punctuation delimiter">.</span><span class="property">data</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+      <span class="keyword">if</span> <span class="punctuation bracket">(</span><span class="variable">payload</span><span class="punctuation delimiter">.</span><span class="property">game_id</span> <span class="operator">===</span> <span class="string">&apos;123120&apos;</span><span class="punctuation bracket">)</span><span class="punctuation bracket">{</span>
+        <span class="function">setMessage1</span><span class="punctuation bracket">(</span><span class="variable">payload</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+      <span class="punctuation bracket">}</span> <span class="keyword">else</span> <span class="keyword">if</span> <span class="punctuation bracket">(</span><span class="variable">payload</span><span class="punctuation delimiter">.</span><span class="property">game_id</span> <span class="operator">===</span> <span class="string">&apos;123121&apos;</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">{</span>
+        <span class="function">setMessage2</span><span class="punctuation bracket">(</span><span class="variable">payload</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+      <span class="punctuation bracket">}</span>
+
+    <span class="punctuation bracket">}</span><span class="punctuation delimiter">;</span>
+
+    <span class="variable">socket</span><span class="punctuation delimiter">.</span><span class="property">onclose</span> <span class="operator">=</span> <span class="keyword">function</span> <span class="punctuation bracket">(</span><span class="variable">event</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">{</span>
+      <span class="variable">console</span><span class="punctuation delimiter">.</span><span class="function method">log</span><span class="punctuation bracket">(</span><span class="string">&apos;Disconnected from WebSocket server&apos;</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+    <span class="punctuation bracket">}</span><span class="punctuation delimiter">;</span>
+
+
+  <span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+  <span class="keyword">function</span> <span class="function">sendMessage</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">{</span>
+
+    <span class="keyword">const</span> <span class="variable">messageInput</span> <span class="operator">=</span> <span class="punctuation bracket">{</span> <span class="string">&apos;payload&apos;</span>: <span class="string">&apos;vapo2&apos;</span><span class="punctuation delimiter">,</span> <span class="string">&apos;clientId&apos;</span>: <span class="variable">user</span><span class="punctuation delimiter">.</span><span class="property">clientId</span> <span class="punctuation bracket">}</span><span class="punctuation delimiter">;</span>
+
+    <span class="keyword">const</span> <span class="variable">message</span> <span class="operator">=</span> <span class="variable">JSON</span><span class="punctuation delimiter">.</span><span class="function method">stringify</span><span class="punctuation bracket">(</span><span class="variable">messageInput</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+    <span class="variable">socket</span><span class="punctuation delimiter">.</span><span class="function method">send</span><span class="punctuation bracket">(</span><span class="variable">message</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+  <span class="punctuation bracket">}</span><span class="punctuation delimiter">;</span>
+
+  <span class="keyword">function</span> <span class="function">addGame</span><span class="punctuation bracket">(</span><span class="variable">game_id</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">{</span>
+    <span class="keyword">if</span> <span class="punctuation bracket">(</span><span class="operator">!</span><span class="variable">game_ids</span><span class="punctuation delimiter">.</span><span class="function method">includes</span><span class="punctuation bracket">(</span><span class="variable">game_id</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">)</span><span class="punctuation bracket">{</span>
+      <span class="function">setGameIds</span><span class="punctuation bracket">(</span><span class="variable">game_ids</span> <span class="operator">=&gt;</span> <span class="punctuation bracket">[</span>...<span class="variable">game_ids</span><span class="punctuation delimiter">,</span> <span class="variable">game_id</span><span class="punctuation bracket">]</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+    <span class="punctuation bracket">}</span>
+  <span class="punctuation bracket">}</span><span class="punctuation delimiter">;</span>
+
+
+  <span class="keyword">return</span> <span class="punctuation bracket">(</span>
+    <span class="operator">&lt;</span><span class="variable">div</span> <span class="property">className</span><span class="operator">=</span><span class="string">&quot;App&quot;</span><span class="operator">&gt;</span>
+      <span class="operator">&lt;</span><span class="variable">header</span> <span class="property">className</span><span class="operator">=</span><span class="string">&quot;App-header&quot;</span><span class="operator">&gt;</span>
+        <span class="operator">&lt;</span><span class="variable">h1</span><span class="operator">&gt;</span>
+          Odds Market Simulator
+        &lt;/<span class="variable">h1</span><span class="operator">&gt;</span>
+
+      <span class="operator">&lt;</span><span class="variable">OutputComponent</span> <span class="property">messages</span><span class="operator">=</span><span class="punctuation bracket">{</span><span class="variable">messages</span><span class="punctuation bracket">}</span> /&gt;
+
+      &lt;/<span class="variable">header</span><span class="operator">&gt;</span>
+    &lt;/<span class="variable">div</span><span class="operator">&gt;</span>
+  <span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+<span class="punctuation bracket">}</span>
+
+<span class="keyword">export</span> <span class="keyword">default</span> <span class="variable">App</span><span class="punctuation delimiter">;</span>
+
+</code></pre>
+<p>Givin’ it some style with css, the App.css.</p><pre><code>FROM node:18-alpine AS build
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+RUN npm run build
+
+FROM nginx:alpine
+COPY --from=build /app/build /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD [&quot;nginx&quot;, &quot;-g&quot;, &quot;daemon off;&quot;]
+</code></pre></div>
+  <div id="footnotes"></div>
+  <div>
+    <small><a href="/index.xml" rel="alternate" type="application/rss+xml">RSS feed</a></small>
+  </div>
+  <hr>
+  <div id="prev-next">
+    <span>
+      <a href="/blog/zigodd/">←
+        <span>Convert decimal odds to probabilities with Zig</span></a>
+    </span>
+    <span></span>
+    <span></span>
+    <small>&nbsp; or &nbsp;</small>
+    <small>
+      <a href="/">Back to the Homepage</a>
+    </small>
+  </div>
+
+    </div>
+  </body>
+</html>

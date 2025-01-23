@@ -3,8 +3,8 @@ const zine = @import("zine");
 
 pub fn build(b: *std.Build) !void {
     zine.website(b, .{
-        .title = "Loris Cro's Blog",
-        .host_url = "https://kristoff.it",
+        .title = "Viny Brasil's Blog",
+        .host_url = "https://vinybrasil.github.io",
         .layouts_dir_path = "layouts",
         .content_dir_path = "content",
         .assets_dir_path = "assets",
