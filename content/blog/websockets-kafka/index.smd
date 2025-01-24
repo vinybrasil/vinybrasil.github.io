@@ -9,28 +9,29 @@
 
 ## Introduction
 
-Suppose we have a API that generates a lot of information whom we must store in a database and show them to clients. For example, the API have some 
+Suppose we have a API that generates a lot of information whom we must store in a database and show them to clients. This information updates every few seconds 
+and this sort of system is call a real-time app (in reality, it takes some seconds, so it's a near real time app). Some applications that can use this sort of design are:
 
-Some use cases are:
+- chatbots: the API is a LLM that receives an input and send it's response to the client;
 
-- chatbot: the API is a LLM that receives an input and send it's response to the client;
+- systems with time series: the API fetches data from somewhere (like some temperature reading) and updates in real time to the client;
 
-- time series: the API fetches data from somewhere (like some temperature reading) and updates in real time to the client;
+- systems with position in space: the API fetches data from a train (or a car) and updates show them to someone waiting (like a Uber passenger);
 
 - sports betting: the API calculate the odds of something happen in the game and updates it to the client.
 
-In this project we'll build a sports betting app. We'll create a webapp which send a `websocket message` to their clients after
+In this project we'll build a near real-time app. We've chosen to build a simple sports betting app that will only show the clients updated odds.
+The webapp will send a `websocket message` to their clients after
 receiving a message from a Kafka topic. This message comes from a `new record being inserted in the database` 
 from a API and captured by Kafka-Connect with the debezium plugin.  
 
-
-
-The design of the system follows: a API receives external data and insert it to the database, Kafka Connect get the payload and send it to 
+The design of the system follows: a API receives external data and insert it to the database, Kafka Connect get the payload inserted and send it to 
 a Kafka topic. A websocket server is consuming the messages from this topic and, when receives a message, send it to the websockets clients. 
+This design allows the system to be scalable since some of the components can work asynchronously, therefore the ones with more load can be horizontally scaled. 
 The image below ilustrates it. 
 []($image.asset("websocket.png")) 
 
-This design allows the system to be scalable since some of the components can work asynchronously, therefore the ones with more load can be horizontally scaled. 
+
 
 There are four main steps to build this system:
 
@@ -47,7 +48,7 @@ this [Github repository](https://github.com/vinybrasil/websocket-kafka).
 
 To use Kafka we need Zookeeper, also included in the following docker-compose file. The file also creates the database and uses default password and username.
 Kafka-Connect installing the debezium plugin is where the magic happens. The plugin is responsable for get the data inserted in the database and push it to a 
-Kafka topic. 
+Kafka topic. The version of docker used is 20.10.12, the docker-compose version is v2.29.1-desktop.1 and here's the code for the docker-compose file.
 
 ```bash
 services:
@@ -152,9 +153,11 @@ docker-compose up -f docker-compose.yml -d
 
 ## Setting up the database
 
-Each game will use a table in the database "gameodds" and the table will be called game_$gameid, where $gameid is a int 
+Each game will use a table in the database "gameodds" and the table will be called game_{gameid}, where {gameid} is a int 
 identifing each game. By creating the database we also need to grant the privileges to the user (please, don't let 
 credentials like this explicity in the code in production, you're gonna get yourself fired).
+
+I chose MySQL because it's simple but you can use another database since debezium has plugins in their [website](https://debezium.io/documentation/reference/stable/connectors/index.html) for MongoDB, PostgreSQL etc.
 The following script file will to be in the 'mysql-init' folder and it will run every time docker-compose up. 
 
 ```bash
@@ -238,7 +241,7 @@ docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}
 docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $(docker ps -aq --filter "name=kafka-connect")
 ```
 
-The /games route creates a new table using pure SQL based on the $game_id from the request. Then, it calls the kafka-connect API creating a new connector with 
+The /games route creates a new table using pure SQL based on the {game_id} from the request. Then, it calls the kafka-connect API creating a new connector with 
 this table. 
 
 
@@ -336,29 +339,29 @@ Containerazing it with Docker (check the Dockerfile in the repository) and build
 docker build -t fastapi-image . && docker run -d --name fastapi-container -p 80:80 --net websockets_default fastapi-image
 ```
 
-Let's create a game with the id = 123122:
+So to create a game with the id = 123122:
 ```
 curl -X POST "localhost:80/games/123122"
 ```
-Send some odds to the database:
+Send some odds in that game to the database:
 ```
 curl -X POST "localhost:80/sendodd/123122"
 ```
 
-
 ## JS Websocket server
 
 The first thing we'll need is the websocket server, which will receive the messages from the Kafka topic and send them 
-to all the websocket clients. The version of the packages used are ws@8.18.0 and uuid@11.0.4. The following code uses Javascript to create a websocket server
-and a variable called `raw_odds`, the one which will store what comes from the Kafka topic.
+to all the websocket clients. The version of the package used is ws@8.18.0. The following code uses Javascript to create a websocket server
+and the consumer to the Kafka topics.
 
+Let's load the libraries needed and start the connection with the database,  start the connection with Kafka and start the Websocket server:
 ```javascript
 const WebSocket = require("ws");
-const uuidv4 = require("uuid").v4;
 var mysql = require("mysql2");
+const { Kafka } = require("kafkajs");
 
 const MYSQL_IP = "172.18.0.2";
-const KAFKA_IP = "172.18.0.4";
+const KAFKA_IP = "172.18.0.5";
 
 let connection_names = [];
 
@@ -371,12 +374,9 @@ var con = mysql.createConnection({
 });
 
 const wss = new WebSocket.Server({ port: 81 });
-const { Kafka } = require("kafkajs");
 
 console.log("Server running");
 
-const clients = {};
-var last_odds = {};
 
 const kafka = new Kafka({
   brokers: [`${KAFKA_IP}:29092`],
@@ -390,21 +390,23 @@ con.connect(function (err) {
     "SELECT connector_name FROM available_games",
     function (err, result, fields) {
       if (err) throw err;
-      console.log(`c3: ${result}`);
       var values = result.map((item) => item.connector_name);
       connection_names = values;
-      console.log(`c4: ${connection_names}`);
       run(connection_names).catch(console.error);
     }
   );
 });
+```
+Every time the server starts, it queries the database looking for available games. They are stored in a list 
+called "connection_names" and the server will consume the Kafka topic related to that game. Every time 
+it receives a new payload from any of the games, it stores in a variable call last_odds. Them, every 5 seconds, it sends it to all the clients connected. 
 
+```javascript
 var last_odds = {};
 
 const run = async (connection_names) => {
   await consumer.connect();
 
-  console.log(`c2: ${connection_names}`);
 
   await connection_names.forEach((item) => {
     console.log(`connecting: ${item}`);
@@ -413,6 +415,7 @@ const run = async (connection_names) => {
       fromBeginning: false,
     });
   });
+
 
   await consumer.run({
     eachMessage: async ({ topic, partition, message }) => {
@@ -429,12 +432,7 @@ const run = async (connection_names) => {
 wss.on("connection", (ws) => {
   console.log("Client connected");
 
-  const userId = uuidv4();
   console.log("Received a new connection");
-
-  clients[userId] = ws;
-
-  ws.send(`${userId}`);
 
   ws.on("close", () => {
     console.log("Client disconnected");
@@ -461,21 +459,19 @@ and then close it. It's just for testing pourposes but it can be useful if somet
 
 ## JS Websocket client
 
-For the client, we'll use React. The version of the packages used are create-react-app@5.0.1, web-vitals@4.2.4 and ws@8.18.0.
+For the client, we'll use React to build a simple UI. The version of the packages used are create-react-app@5.0.1, web-vitals@4.2.4 and ws@8.18.0.
+It uses a list of games indexed by the game_id and shows them. If it receives a message with the same game_id of one of the messages stored in the list,
+it updates the values of the odds. If the game_id is not among them, just appends it to the list. The code also connects itself to the websocket server we've build 
+earlier.
 Creating the app with create-react-app, the App.js will be:
 
 ```javascript
-import './App.css';
+import "./App.css";
 
-import React, { useEffect, useState } from 'react';
-
+import React, { useEffect, useState } from "react";
 
 const WEBSOCKETSERVER_IP = "127.0.0.1";
 const socket = new WebSocket(`ws://${WEBSOCKETSERVER_IP}:81`);
-
-var user = {
-  clientId: ''
-}
 
 const OutputComponent = ({ messages }) => {
   return (
@@ -485,11 +481,11 @@ const OutputComponent = ({ messages }) => {
           <ul className="list">
             <li>
               <div>Game ID: {game.game_id}</div>
-              <div>Odd 1: {game.odd1.toFixed(4)}</div>
-              <div>Odd 2: {game.odd2.toFixed(4)}</div>
-              <div>Odd 3: {game.odd3.toFixed(4)}</div>
-              <div>Odd 4: {game.odd4.toFixed(4)}</div>
-              <div>Odd 5: {game.odd5.toFixed(4)}</div>
+              <div>Odd 1: {game.odd1}</div>
+              <div>Odd 2: {game.odd2}</div>
+              <div>Odd 3: {game.odd3}</div>
+              <div>Odd 4: {game.odd4}</div>
+              <div>Odd 5: {game.odd5}</div>
             </li>
           </ul>
         </div>
@@ -499,79 +495,50 @@ const OutputComponent = ({ messages }) => {
 };
 
 function App() {
-
-  const [message1, setMessage1] = useState({});
-  const [message2, setMessage2] = useState({});
-  const [game_ids, setGameIds] = useState([]);
-
-  const messages = [
-    { game_id: "12345", odd1: 2.5, odd2: 3.1, odd3: 4.0, odd4: 1.8, odd5: 5.2 },
-    { game_id: "67890", odd1: 1.5, odd2: 2.1, odd3: 3.0, odd4: 1.3, odd5: 4.2 },
-    { game_id: "54321", odd1: 3.5, odd2: 4.1, odd3: 5.0, odd4: 2.8, odd5: 6.2 },
-  ];
+  const [messages, setMessages] = useState([]);
 
   useEffect(() => {
-
     socket.onopen = function (event) {
-      console.log('You are Connected to WebSocket Server');
+      console.log("You are Connected to WebSocket Server");
     };
     socket.onmessage = function (event) {
-
-      if (user.clientId === '') {
-        user['clientId'] = event.data;
-        return;
-      }
-
       const payload = JSON.parse(event.data);
 
-      if (payload.game_id === '123120'){
-        setMessage1(payload);
-      } else if (payload.game_id === '123121') {
-        setMessage2(payload);
-      }
+      setMessages((prevMessages) => {
+        const existingIndex = prevMessages.findIndex(
+          (msg) => msg.game_id === payload.game_id
+        );
 
+        if (existingIndex >= 0) {
+          const updatedMessages = [...prevMessages];
+          updatedMessages[existingIndex] = {
+            ...updatedMessages[existingIndex],
+            ...payload,
+          };
+          return updatedMessages;
+        } else {
+          return [...prevMessages, payload];
+        }
+      });
     };
 
     socket.onclose = function (event) {
-      console.log('Disconnected from WebSocket server');
+      console.log("Disconnected from WebSocket server");
     };
-
-
   });
-
-  function sendMessage() {
-
-    const messageInput = { 'payload': 'vapo2', 'clientId': user.clientId };
-
-    const message = JSON.stringify(messageInput);
-
-    socket.send(message);
-
-  };
-
-  function addGame(game_id) {
-    if (!game_ids.includes(game_id) ){
-      setGameIds(game_ids => [...game_ids, game_id]);
-    }
-  };
-
 
   return (
     <div className="App">
       <header className="App-header">
-        <h1>
-          Odds Market Simulator
-        </h1>
+        <h1>Odds Market Simulator</h1>
 
-      <OutputComponent messages={messages} />
-
+        <OutputComponent messages={messages} />
       </header>
     </div>
   );
 }
 
 export default App;
-
 ```
 
 The Dockerfile for the WebSocket client uses nginx to serve the built app. The final app looks something like this:
@@ -581,12 +548,56 @@ The Dockerfile for the WebSocket client uses nginx to serve the built app. The f
 
 ## Testing 
 
-If everything is ok, by starting the docker-compose, the API, the websocker server and the client, by calling the API
+If everything is ok, by starting the docker-compose, the API, the websocker server and the client, we can now call the API to create a new game:
 ```
-curl -X POST "localhost:80/games/123122"
-curl -X POST "localhost:80/sendodd/123122"
+curl -X POST "localhost:80/games/123121"
 ```
-we should see the new odds updated in the browser.
+Now lets create some odds:
+```
+curl -X POST "localhost:80/sendodd/123121"
+```
+It returns the following payload:
+```
+{
+    "game_id": "123121",
+    "odd1": 0.32,
+    "odd2": 2.28,
+    "odd3": 3.14,
+    "odd4": 0.99,
+    "odd5": 0.17
+}
+```
+We should see the odds updated in the browser: 
+
+[]($image.asset("odd1.png")) 
+
+By calling it again, the odds should change:
+```
+curl -X POST "localhost:80/sendodd/123121"
+```
+It returns the following payload:
+```
+{
+    "game_id": "123121",
+    "odd1": 3.54,
+    "odd2": 1.07,
+    "odd3": 2.12,
+    "odd4": 4.42,
+    "odd5": 3.36
+}
+```
+and updates in the browser: 
+
+[]($image.asset("odd2.png")) 
+
+Let's create another game now. 
+```
+curl -X POST "localhost:80/games/123120"
+```
+By calling the endpoint, the new game should apper in the browser.
+[]($image.asset("odd3.png")) 
 
 That's it. You can check the full source code in the [repository](https://github.com/vinybrasil/websocket-kafka) and feel free to 
-contact me if there are some errors. Keep on learning :D
+contact me if there are some errors. Still there's a lot to be done and in the repository listed some thing in the todo list. Keep on learning :D
+
+[]($image.asset("header.png")) 
