@@ -9,19 +9,28 @@
 
 ## Introduction
 
+Suppose we have a API that generates a lot of information whom we must store in a database and show them to clients. For example, the API have some 
 
-In this project we'll create a webapp which send a `websocket message` to their clients after
-receiving a message from a Kafka topic. This message comes from a new record being inserted in the database 
-from a API and captured by `debezium`. 
+Some use cases are:
 
-The motivation for this project it's that recently I've been really interested on how sports betting website works, on how every second they're 
-updating the odds in the screen. The answer is `websockets`, which can be used to update in 
-near real-time the information to the client. 
+- chatbot: the API is a LLM that receives an input and send it's response to the client;
+
+- time series: the API fetches data from somewhere (like some temperature reading) and updates in real time to the client;
+
+- sports betting: the API calculate the odds of something happen in the game and updates it to the client.
+
+In this project we'll build a sports betting app. We'll create a webapp which send a `websocket message` to their clients after
+receiving a message from a Kafka topic. This message comes from a `new record being inserted in the database` 
+from a API and captured by Kafka-Connect with the debezium plugin.  
 
 
 
+The design of the system follows: a API receives external data and insert it to the database, Kafka Connect get the payload and send it to 
+a Kafka topic. A websocket server is consuming the messages from this topic and, when receives a message, send it to the websockets clients. 
+The image below ilustrates it. 
 []($image.asset("websocket.png")) 
 
+This design allows the system to be scalable since some of the components can work asynchronously, therefore the ones with more load can be horizontally scaled. 
 
 There are four main steps to build this system:
 
@@ -29,6 +38,9 @@ There are four main steps to build this system:
 2) setup the database (MySQL) and the scripts to initialize it correctly;
 3) build the API to create the data;
 4) create the websocket server and the client;
+
+Here I'll only share some parts of the code because the full project is too large and the full code is on 
+this [Github repository](https://github.com/vinybrasil/websocket-kafka). 
 
 
 ## Setting up Kafka Connector and debezium (the docker-compose file)
@@ -576,4 +588,5 @@ curl -X POST "localhost:80/sendodd/123122"
 ```
 we should see the new odds updated in the browser.
 
-That's it. You can check the full source code in the [repository](https://github.com/vinybrasil/websocket-kafka). Keep on learning :D
+That's it. You can check the full source code in the [repository](https://github.com/vinybrasil/websocket-kafka) and feel free to 
+contact me if there are some errors. Keep on learning :D
