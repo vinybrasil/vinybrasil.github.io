@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head id="head">
+    <meta charset="utf-8">
+    <title id="title">
+      Running sklearn models in Zig
+      | Viny Brasil's Blog
+    </title>
+    <meta name="description" content="Learn how to execute predictions from scikit-learn models in Zig with the Python&apos;s C API and the Zap webframework">
+    <meta name="twitter:description" content="Learn how to execute predictions from scikit-learn models in Zig with the Python&apos;s C API and the Zap webframework">
+    <meta name="twitter:title" content="Running sklearn models in Zig">
+    <meta property="og:title" content="Running sklearn models in Zig">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://vinybrasil.github.io/logo.png">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="/main.css?bust2">
+    <link type="text/css" rel="stylesheet" href="/highlight.css?bust">
+    <link rel="stylesheet" type="text/css" href="/fonts.css">
+    <link rel="stylesheet" type="text/css" href="/fira_code.css">
+    <link rel="stylesheet" type="text/css" href="/style.css">
+    <link rel="stylesheet" type="text/css" href="/highlight.css">
+    
+    <script id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+    
+    <script defer type="text/javascript" src="https://api.pirsch.io/pirsch.js" id="pirschjs" data-code="CnorXJVVDmhCee3FBtXSQISdHIUmqp3o"></script>
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y0TCWKTPYJ"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-Y0TCWKTPYJ');
+    </script>
+    
+  <link type="text/css" rel="stylesheet" href="/term-highlight.css">
+
+  </head>
+  <body>
+    <!-- <nav id="menu" class="centered"> -->
+    <nav>
+
+      <a href="/">Home</a>
+      •
+      <a href="/projects/">Posts</a>
+      •
+      <a href="/research/">Research</a>
+      •
+      <a href="https://linkedin.com/in/vinicyus-brasil" target="_blank">LinkedIn</a>
+      •
+      <a href="https://github.com/vinybrasil" target="_blank">Github</a>
+      
+    </nav>
+    <div id="content">
+      
+  <!-- <div style="display:flex; flex-direction:column; align-items:center;">
+    <h1 id="header"><a class="reset-a" href="/">Loris Cro</a></h1>
+    <small><i>Personal Website</i></small>
+    <div style="display:flex; justify-content:center; font-size:small;">
+      <a href="/">About</a>
+      	&nbsp; • &nbsp;
+      <a href="https://twitter.com/croloris">Twitter</a>
+      	&nbsp; • &nbsp;
+      <a href="https://twitch.tv/kristoff_it">Twitch</a>
+      	&nbsp; • &nbsp;
+      <a href="https://youtube.com/c/ZigSHOWTIME/">YouTube</a>
+      	&nbsp; • &nbsp;
+      <a href="https://github.com/kristoff-it">GitHub</a>
+    </div>
+  </div> -->
+  <h1>Running sklearn models in Zig</h1>
+  <p class="post-byline">
+    <span>February 06, 2025</span>
+    •
+    <span>10</span>
+    min read • by
+    <b>Vinicyus Brasil</b>
+    <span></span>
+  </p>
+  <div id="post-description">Learn how to execute predictions from scikit-learn models in Zig with the Python's C API and the Zap webframework</div>
+  <div id="post-body"><h2>Introduction</h2><p>Scikit-learn models became the industry standard for creating machine learning models. Although the library offers many conveniences, one becomes tied to Python APIs for serving such models. These frameworks (such as FastAPI, for example) have various scalability issues, as Anton demonstrates in this video. To overcome this limitation, one solution is to use Python’s C library to run the models, while the rest of the API can be built using another framework.</p><p>In this blogpost we’ll implement this strategy. We’ll create an application that uses Python’s C API to run the models with the <a href="https://github.com/zigzap/zap" target="_blank">Zap</a> library handling the requests, which is a Zig <code>blazing fast microframework for web applications</code>. The full code to the post can be found in this <a href="https://github.com/vinybrasil/zig-sklearn" target="_blank">repository</a>.</p><h2>Creating the model and the shared object</h2><p>So let’s say we got this simple script called <strong>train.py</strong> that creates a Logistic Regression, in which the model takes a numpy array with two dimensions and returns the value 1 or 0.  The model is saved in a pickle file called <strong>model.pkl</strong>.</p><pre><code class="python"><span class="keyword">import</span> <span class="variable">numpy</span> <span class="keyword">as</span> <span class="variable">np</span>
+<span class="keyword">from</span> <span class="variable">sklearn</span>.<span class="variable">linear_model</span> <span class="keyword">import</span> <span class="variable">LogisticRegression</span>
+<span class="keyword">import</span> <span class="variable">pickle</span>
+
+<span class="variable">X</span> <span class="operator">=</span> <span class="variable">np</span>.<span class="function method">array</span>([
+    [<span class="number">1.2</span>, <span class="number">1.3</span>],
+    [<span class="number">2.2</span>, <span class="number">1.4</span>],
+    [<span class="number">0.9</span>, <span class="number">2.1</span>],
+    [<span class="operator">-</span><span class="number">1.2</span>, <span class="operator">-</span><span class="number">2.3</span>],
+    [<span class="operator">-</span><span class="number">1.3</span>, <span class="operator">-</span><span class="number">0.2</span>],
+    [<span class="operator">-</span><span class="number">1.1</span>, <span class="operator">-</span><span class="number">2.8</span>],
+])
+
+<span class="variable">y</span> <span class="operator">=</span> <span class="variable">np</span>.<span class="function method">array</span>([[<span class="number">1</span>],[<span class="number">1</span>],[<span class="number">1</span>],[<span class="number">0</span>],[<span class="number">0</span>],[<span class="number">0</span>]])
+
+<span class="variable">y</span> <span class="operator">=</span> <span class="variable">y</span>.<span class="function method">ravel</span>()
+<span class="variable">model</span> <span class="operator">=</span> <span class="function">LogisticRegression</span>()
+
+<span class="variable">model</span>.<span class="function method">fit</span>(<span class="variable">X</span>, <span class="variable">y</span>)
+
+<span class="keyword">with</span> <span class="function">open</span>(<span class="string">&apos;model.pkl&apos;</span>, <span class="string">&apos;wb&apos;</span>) <span class="keyword">as</span> <span class="variable">handle</span>:
+    <span class="variable">pickle</span>.<span class="function method">dump</span>(<span class="variable">model</span>, <span class="variable">handle</span>)
+</code></pre>
+<p>The full library we are going to create just loads the pickle file and returns it in a list. It will attend by the name of <code>libpredict</code> and it <strong>predict_sklearn.py</strong> module have the following code:</p><pre><code class="python"><span class="keyword">import</span> <span class="variable">numpy</span> <span class="keyword">as</span> <span class="variable">np</span>
+<span class="keyword">import</span> <span class="variable">pickle</span>
+
+<span class="keyword">def</span> <span class="function">predict</span>(<span class="variable">x</span>):
+    <span class="keyword">with</span> <span class="function">open</span>(<span class="string">&apos;./model.pkl&apos;</span>, <span class="string">&apos;rb&apos;</span>) <span class="keyword">as</span> <span class="variable">handle</span>:
+        <span class="variable">b_1</span> <span class="operator">=</span> <span class="variable">pickle</span>.<span class="function method">load</span>(<span class="variable">handle</span>)
+    
+    <span class="keyword">return</span> [<span class="function">float</span>(<span class="variable">b_1</span>.<span class="function method">predict</span>(<span class="variable">np</span>.<span class="function method">array</span>(<span class="variable">x</span>).<span class="function method">reshape</span>(<span class="number">1</span>, <span class="operator">-</span><span class="number">1</span>))[<span class="number">0</span>])]
+</code></pre>
+<p>Quite simple, right? The next step is to compile it to a shared object, the kind of file that contains the code we just wrote. Theoretically this step is not needed but I think its way easier to work with the library this way.</p><p>To compile the library we can use Cython. The following <strong>setup.py</strong> file will translate our library to C and generate the shared object.</p><pre><code class="python"><span class="keyword">from</span> <span class="variable">setuptools</span> <span class="keyword">import</span> <span class="variable">setup</span>, <span class="variable">Extension</span>, <span class="variable">find_packages</span>
+<span class="keyword">from</span> <span class="variable">Cython</span>.<span class="variable">Build</span> <span class="keyword">import</span> <span class="variable">cythonize</span>
+<span class="keyword">import</span> <span class="variable">sysconfig</span>
+
+
+<span class="variable">python_inc</span> <span class="operator">=</span> <span class="variable">sysconfig</span>.<span class="function method">get_path</span>(<span class="string">&quot;include&quot;</span>)
+<span class="variable">python_lib</span> <span class="operator">=</span> <span class="variable">sysconfig</span>.<span class="function method">get_config_var</span>(<span class="string">&quot;LIBDIR&quot;</span>)
+<span class="variable">python_version</span> <span class="operator">=</span> <span class="variable">sysconfig</span>.<span class="function method">get_config_var</span>(<span class="string">&quot;VERSION&quot;</span>)
+<span class="variable">python_shared</span> <span class="operator">=</span> <span class="string">f&quot;python{python_version}&quot;</span>
+
+<span class="variable">extensions</span> <span class="operator">=</span> <span class="function">cythonize</span>(
+    <span class="function">Extension</span>(
+        <span class="variable">name</span><span class="operator">=</span><span class="string">&quot;libpredict&quot;</span>,
+        <span class="variable">sources</span><span class="operator">=</span>[<span class="string">&quot;libpredict/predict_sklearn.py&quot;</span>],
+        <span class="variable">libraries</span><span class="operator">=</span>[<span class="variable">python_shared</span>],  
+        <span class="variable">library_dirs</span><span class="operator">=</span>[<span class="variable">python_lib</span>],  
+        <span class="variable">include_dirs</span><span class="operator">=</span>[<span class="variable">python_inc</span>], 
+        <span class="variable">extra_link_args</span><span class="operator">=</span>[
+            <span class="string">&quot;-Wl,-rpath,&quot;</span> <span class="operator">+</span> <span class="variable">python_lib</span>,  
+            <span class="string">&quot;-Wl,--no-as-needed&quot;</span>,  
+        ],
+    )
+)
+
+<span class="function">setup</span>(
+    <span class="variable">name</span><span class="operator">=</span><span class="string">&quot;libpredict&quot;</span>,
+    <span class="variable">packages</span><span class="operator">=</span><span class="function">find_packages</span>(),
+    <span class="variable">ext_modules</span><span class="operator">=</span><span class="variable">extensions</span>,
+)
+</code></pre>
+<p>Note that both of the files generated, libpredict.so and model.pkl, need to be moved to the same folder where we’ll build the zig executable.</p><h2>Running Python code in Zig</h2><p>To interact with the Python C API, we gotta load the header file that includes the Python functions. The <strong>main.zig</strong> file starts with:</p><pre><code class="zig"><span class="keyword">const</span> <span class="variable">c</span> <span class="operator">=</span> <span class="keyword import">@cImport</span><span class="punctuation bracket">(</span><span class="punctuation bracket">{</span>
+    <span class="function builtin">@cInclude</span><span class="punctuation bracket">(</span><span class="string">&quot;Python.h&quot;</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+<span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+</code></pre>
+<p>The syntax to call Python is in this <a href="https://docs.python.org/3/c-api/index.html" target="_blank">documentation</a>. For exemple, to print a string, we first need to initialize the interpreter and use the function PyRun_SimpleString with the string.</p><pre><code>    c.Py_Initialize();
+    _ = c.PyRun_SimpleString(&quot;import sys; sys.path.append(&apos;.&apos;);&quot;);
+    c.Py_Finalize();
+</code></pre><p>The main.zig file will start this way. First, we initialize the interpreter. Then, load the module <strong>libpredict</strong> and extracts from it a pointer to the function <strong>predict</strong> from the <strong>predict_sklearn.py</strong>. To call the function we need to convert the zig array <strong>doubles2</strong> to a Python List also using the C API and that’s the reason for the function <strong>prepareList</strong> to exist. Finally, the function can be called using the converted list.</p><pre><code>pub fn main() !void {
+    c.Py_Initialize();
+
+    _ = c.PyRun_SimpleString(&quot;import sys; sys.path.append(&apos;.&apos;);&quot;);
+
+    const module = try loadMod();
+
+    const func = try loadFunc(module);
+
+    var doubles2 = [_]f64{ 1.2, 1.3 };
+
+    const pList = try prepareList(doubles2[0..]);
+
+    const result = evaluteResult(pList, func);
+
+    std.debug.print(&quot;Test: {any}\n&quot;, .{result});
+
+    _ = c.Py_DecRef(func);
+    _ = c.Py_DecRef(module);
+}
+</code></pre><p>Note the loadMod() function appends the current path and from it import the <strong>libpredict.so</strong> file so the loadFunc function can link a pointer to the predict function.</p><pre><code class="zig"><span class="keyword modifier">pub</span> <span class="keyword function">fn</span> <span class="function">loadMod</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span> <span class="operator">!</span><span class="operator">*</span><span class="variable">c</span><span class="punctuation delimiter">.</span><span class="variable member">PyObject</span> <span class="punctuation bracket">{</span>
+    <span class="keyword">const</span> <span class="variable">sys</span> <span class="operator">=</span> <span class="variable">c</span><span class="punctuation delimiter">.</span><span class="function call">PyImport_ImportModule</span><span class="punctuation bracket">(</span><span class="string">&quot;sys&quot;</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+    <span class="keyword">const</span> <span class="variable">path</span> <span class="operator">=</span> <span class="variable">c</span><span class="punctuation delimiter">.</span><span class="function call">PyObject_GetAttrString</span><span class="punctuation bracket">(</span><span class="variable">sys</span><span class="punctuation delimiter">,</span> <span class="string">&quot;path&quot;</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+    <span class="variable">_</span> <span class="operator">=</span> <span class="variable">c</span><span class="punctuation delimiter">.</span><span class="function call">PyList_Append</span><span class="punctuation bracket">(</span><span class="variable">path</span><span class="punctuation delimiter">,</span> <span class="variable">c</span><span class="punctuation delimiter">.</span><span class="function call">PyUnicode_FromString</span><span class="punctuation bracket">(</span><span class="string">&quot;.&quot;</span><span class="punctuation bracket">)</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+    <span class="keyword">const</span> <span class="variable">module</span> <span class="operator">=</span> <span class="variable">c</span><span class="punctuation delimiter">.</span><span class="function call">PyImport_ImportModule</span><span class="punctuation bracket">(</span><span class="string">&quot;libpredict&quot;</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+    <span class="keyword return">return</span> <span class="variable">module</span><span class="punctuation delimiter">;</span>
+<span class="punctuation bracket">}</span>
+
+<span class="keyword modifier">pub</span> <span class="keyword function">fn</span> <span class="function">loadFunc</span><span class="punctuation bracket">(</span><span class="variable parameter">module</span><span class="punctuation delimiter">:</span> <span class="operator">*</span><span class="variable">c</span><span class="punctuation delimiter">.</span><span class="variable member">PyObject</span><span class="punctuation bracket">)</span> <span class="operator">!</span><span class="operator">*</span><span class="variable">c</span><span class="punctuation delimiter">.</span><span class="variable member">PyObject</span> <span class="punctuation bracket">{</span>
+    <span class="keyword">const</span> <span class="variable">func</span> <span class="operator">=</span> <span class="variable">c</span><span class="punctuation delimiter">.</span><span class="function call">PyObject_GetAttrString</span><span class="punctuation bracket">(</span><span class="variable">module</span><span class="punctuation delimiter">,</span> <span class="string">&quot;predict&quot;</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+    <span class="keyword return">return</span> <span class="variable">func</span><span class="punctuation delimiter">;</span>
+<span class="punctuation bracket">}</span>
+</code></pre>
+<p>The prepareList function just creates a Python list with PyList_New and appends to it the values from the <strong>doubles</strong> arrayh.</p><pre><code class="zig"><span class="keyword modifier">pub</span> <span class="keyword function">fn</span> <span class="function">prepareList</span><span class="punctuation bracket">(</span><span class="variable parameter">doubles</span><span class="punctuation delimiter">:</span> <span class="punctuation bracket">[</span><span class="punctuation bracket">]</span><span class="type builtin">f64</span><span class="punctuation bracket">)</span> <span class="operator">!</span><span class="operator">*</span><span class="variable">c</span><span class="punctuation delimiter">.</span><span class="variable member">PyObject</span> <span class="punctuation bracket">{</span>
+    <span class="keyword">const</span> <span class="variable">pList</span> <span class="operator">=</span> <span class="variable">c</span><span class="punctuation delimiter">.</span><span class="function call">PyList_New</span><span class="punctuation bracket">(</span><span class="number">0</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+    <span class="keyword repeat">for</span> <span class="punctuation bracket">(</span><span class="variable">doubles</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">|</span><span class="variable">elem</span><span class="punctuation bracket">|</span> <span class="punctuation bracket">{</span>
+        <span class="keyword">const</span> <span class="variable">pValue</span> <span class="operator">=</span> <span class="variable">c</span><span class="punctuation delimiter">.</span><span class="function call">PyFloat_FromDouble</span><span class="punctuation bracket">(</span><span class="variable">elem</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+        <span class="keyword conditional">if</span> <span class="punctuation bracket">(</span><span class="variable">c</span><span class="punctuation delimiter">.</span><span class="function call">PyList_Append</span><span class="punctuation bracket">(</span><span class="variable">pList</span><span class="punctuation delimiter">,</span> <span class="variable">pValue</span><span class="punctuation bracket">)</span> <span class="operator">!=</span> <span class="number">0</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">{</span>
+            <span class="variable">c</span><span class="punctuation delimiter">.</span><span class="function call">PyErr_Print</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+        <span class="punctuation bracket">}</span>
+        <span class="variable">_</span> <span class="operator">=</span> <span class="variable">c</span><span class="punctuation delimiter">.</span><span class="function call">Py_DecRef</span><span class="punctuation bracket">(</span><span class="variable">pValue</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+    <span class="punctuation bracket">}</span>
+
+    <span class="keyword return">return</span> <span class="variable">pList</span><span class="punctuation delimiter">;</span>
+<span class="punctuation bracket">}</span>
+</code></pre>
+<p>The evaluteResult function iterates through all of the values of the Python function’s response and the returns the last one. I’ve written the code this way because maybe what you are interested is the return of the predict_proba() function of the sklearn model, so it’s easier to adapt the code.</p><pre><code class="zig"><span class="keyword modifier">pub</span> <span class="keyword function">fn</span> <span class="function">evaluteResult</span><span class="punctuation bracket">(</span><span class="variable parameter">pList</span><span class="punctuation delimiter">:</span> <span class="operator">*</span><span class="variable">c</span><span class="punctuation delimiter">.</span><span class="variable member">PyObject</span><span class="punctuation delimiter">,</span> <span class="variable parameter">func</span><span class="punctuation delimiter">:</span> <span class="operator">*</span><span class="variable">c</span><span class="punctuation delimiter">.</span><span class="variable member">PyObject</span><span class="punctuation bracket">)</span> <span class="operator">!</span><span class="type builtin">f64</span> <span class="punctuation bracket">{</span>
+    <span class="keyword">const</span> <span class="variable">args</span> <span class="operator">=</span> <span class="variable">c</span><span class="punctuation delimiter">.</span><span class="function call">PyTuple_Pack</span><span class="punctuation bracket">(</span><span class="number">1</span><span class="punctuation delimiter">,</span> <span class="variable">pList</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+    <span class="keyword">const</span> <span class="variable">value</span> <span class="operator">=</span> <span class="variable">c</span><span class="punctuation delimiter">.</span><span class="function call">PyObject_CallObject</span><span class="punctuation bracket">(</span><span class="variable">func</span><span class="punctuation delimiter">,</span> <span class="variable">args</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+    <span class="keyword">var</span> <span class="variable">result</span><span class="punctuation delimiter">:</span> <span class="type builtin">f64</span> <span class="operator">=</span> <span class="constant builtin">undefined</span><span class="punctuation delimiter">;</span>
+    <span class="keyword conditional">if</span> <span class="punctuation bracket">(</span><span class="variable">value</span> <span class="operator">!=</span> <span class="constant builtin">null</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">{</span>
+        <span class="keyword">const</span> <span class="variable">list_size</span><span class="punctuation delimiter">:</span> <span class="type builtin">usize</span> <span class="operator">=</span> <span class="keyword import">@intCast</span><span class="punctuation bracket">(</span><span class="variable">c</span><span class="punctuation delimiter">.</span><span class="function call">PyList_Size</span><span class="punctuation bracket">(</span><span class="variable">value</span><span class="punctuation bracket">)</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+        <span class="keyword repeat">for</span> <span class="punctuation bracket">(</span><span class="number">0</span><span class="operator">..</span><span class="variable">list_size</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">|</span><span class="variable">i</span><span class="punctuation bracket">|</span> <span class="punctuation bracket">{</span>
+            <span class="keyword">const</span> <span class="variable">index</span><span class="punctuation delimiter">:</span> <span class="type builtin">isize</span> <span class="operator">=</span> <span class="keyword import">@intCast</span><span class="punctuation bracket">(</span><span class="variable">i</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+            <span class="keyword">const</span> <span class="variable">pItem</span> <span class="operator">=</span> <span class="variable">c</span><span class="punctuation delimiter">.</span><span class="function call">PyList_GetItem</span><span class="punctuation bracket">(</span><span class="variable">value</span><span class="punctuation delimiter">,</span> <span class="variable">index</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+            <span class="keyword">const</span> <span class="variable">pValue</span> <span class="operator">=</span> <span class="variable">c</span><span class="punctuation delimiter">.</span><span class="function call">PyFloat_AsDouble</span><span class="punctuation bracket">(</span><span class="variable">pItem</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+            <span class="variable">std</span><span class="punctuation delimiter">.</span><span class="variable member">debug</span><span class="punctuation delimiter">.</span><span class="function call">print</span><span class="punctuation bracket">(</span><span class="string">&quot;Result = {d}\n&quot;</span><span class="punctuation delimiter">,</span> <span class="punctuation delimiter">.</span><span class="punctuation bracket">{</span><span class="variable">pValue</span><span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+            <span class="variable">result</span> <span class="operator">=</span> <span class="variable">pValue</span><span class="punctuation delimiter">;</span>
+        <span class="punctuation bracket">}</span>
+
+        <span class="variable">_</span> <span class="operator">=</span> <span class="variable">c</span><span class="punctuation delimiter">.</span><span class="function call">Py_DecRef</span><span class="punctuation bracket">(</span><span class="variable">value</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+    <span class="punctuation bracket">}</span> <span class="keyword conditional">else</span> <span class="punctuation bracket">{</span>
+        <span class="variable">c</span><span class="punctuation delimiter">.</span><span class="function call">PyErr_Print</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+    <span class="punctuation bracket">}</span>
+    <span class="variable">_</span> <span class="operator">=</span> <span class="variable">c</span><span class="punctuation delimiter">.</span><span class="function call">Py_DecRef</span><span class="punctuation bracket">(</span><span class="variable">args</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+    <span class="keyword return">return</span> <span class="variable">result</span><span class="punctuation delimiter">;</span>
+<span class="punctuation bracket">}</span>
+</code></pre>
+<h2>Creating the API with Zap</h2><p>I’ve chosen Zap because it’s a <em>blazing fast</em> micro webframework that can handle a lot of requests simultaneously and also it’s quite intuitive.</p><p>To create the API, we need a Router object to map the routes to the functions that handle the requests. Our only route here is the <strong>predict</strong> that receives a json payload with the fields <strong>parameter1</strong> and <strong>parameter2</strong> to send to the Python function. We’ll also need a HttpListener object to listen to the requests on the port 3000. The struct PredictorPackage is where all of the handling of the request is made;</p><pre><code class="zig"><span class="keyword modifier">pub</span> <span class="keyword function">fn</span> <span class="function">main</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span> <span class="operator">!</span><span class="type builtin">void</span> <span class="punctuation bracket">{</span>
+
+    <span class="variable builtin">...</span>
+
+    <span class="keyword">var</span> <span class="variable">gpa</span> <span class="operator">=</span> <span class="variable">std</span><span class="punctuation delimiter">.</span><span class="variable member">heap</span><span class="punctuation delimiter">.</span><span class="function call">GeneralPurposeAllocator</span><span class="punctuation bracket">(</span><span class="punctuation delimiter">.</span><span class="punctuation bracket">{</span>
+        <span class="punctuation delimiter">.</span><span class="variable member">thread_safe</span> <span class="operator">=</span> <span class="variable">true</span><span class="punctuation delimiter">,</span>
+    <span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation bracket">{</span><span class="punctuation bracket">}</span><span class="punctuation delimiter">;</span>
+
+    <span class="keyword">const</span> <span class="variable">allocator</span> <span class="operator">=</span> <span class="variable">gpa</span><span class="punctuation delimiter">.</span><span class="function call">allocator</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+    <span class="keyword">var</span> <span class="variable">simpleRouter</span> <span class="operator">=</span> <span class="variable">zap</span><span class="punctuation delimiter">.</span><span class="variable member">Router</span><span class="punctuation delimiter">.</span><span class="function call">init</span><span class="punctuation bracket">(</span><span class="variable">allocator</span><span class="punctuation delimiter">,</span> <span class="punctuation delimiter">.</span><span class="punctuation bracket">{</span>
+        <span class="punctuation delimiter">.</span><span class="variable member">not_found</span> <span class="operator">=</span> <span class="variable">not_found</span><span class="punctuation delimiter">,</span>
+    <span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+    <span class="keyword">defer</span> <span class="variable">simpleRouter</span><span class="punctuation delimiter">.</span><span class="function call">deinit</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+    <span class="keyword">const</span> <span class="variable">doubles</span> <span class="operator">=</span> <span class="keyword exception">try</span> <span class="variable">allocator</span><span class="punctuation delimiter">.</span><span class="function call">alloc</span><span class="punctuation bracket">(</span><span class="type builtin">f64</span><span class="punctuation delimiter">,</span> <span class="number">2</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+    <span class="keyword">defer</span> <span class="variable">allocator</span><span class="punctuation delimiter">.</span><span class="function call">free</span><span class="punctuation bracket">(</span><span class="variable">doubles</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+    <span class="keyword">var</span> <span class="variable">somePackage</span> <span class="operator">=</span> <span class="variable">PredictorPackage</span><span class="punctuation delimiter">.</span><span class="function call">init</span><span class="punctuation bracket">(</span>
+        <span class="variable">allocator</span><span class="punctuation delimiter">,</span>
+        <span class="variable">doubles</span><span class="punctuation bracket">[</span><span class="number">0</span><span class="operator">..</span><span class="punctuation bracket">]</span><span class="punctuation delimiter">,</span>
+        <span class="variable">func</span><span class="punctuation delimiter">,</span>
+    <span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+    <span class="keyword exception">try</span> <span class="variable">simpleRouter</span><span class="punctuation delimiter">.</span><span class="function call">handle_func</span><span class="punctuation bracket">(</span><span class="string">&quot;/predict&quot;</span><span class="punctuation delimiter">,</span> <span class="operator">&amp;</span><span class="variable">somePackage</span><span class="punctuation delimiter">,</span> <span class="operator">&amp;</span><span class="variable">PredictorPackage</span><span class="punctuation delimiter">.</span><span class="variable member">predictValue</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+    <span class="keyword">var</span> <span class="variable">listener</span> <span class="operator">=</span> <span class="variable">zap</span><span class="punctuation delimiter">.</span><span class="variable member">HttpListener</span><span class="punctuation delimiter">.</span><span class="function call">init</span><span class="punctuation bracket">(</span><span class="punctuation delimiter">.</span><span class="punctuation bracket">{</span>
+        <span class="punctuation delimiter">.</span><span class="variable member">port</span> <span class="operator">=</span> <span class="number">3000</span><span class="punctuation delimiter">,</span>
+        <span class="punctuation delimiter">.</span><span class="variable member">on_request</span> <span class="operator">=</span> <span class="variable">simpleRouter</span><span class="punctuation delimiter">.</span><span class="function call">on_request_handler</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">,</span>
+        <span class="punctuation delimiter">.</span><span class="variable member">log</span> <span class="operator">=</span> <span class="variable">true</span><span class="punctuation delimiter">,</span>
+        <span class="punctuation delimiter">.</span><span class="variable member">max_clients</span> <span class="operator">=</span> <span class="number">100000</span><span class="punctuation delimiter">,</span>
+    <span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+    <span class="keyword exception">try</span> <span class="variable">listener</span><span class="punctuation delimiter">.</span><span class="function call">listen</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+    <span class="variable">std</span><span class="punctuation delimiter">.</span><span class="variable member">debug</span><span class="punctuation delimiter">.</span><span class="function call">print</span><span class="punctuation bracket">(</span><span class="string">&quot;Listening on 0.0.0.0:3000\n&quot;</span><span class="punctuation delimiter">,</span> <span class="punctuation delimiter">.</span><span class="punctuation bracket">{</span><span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+    <span class="variable">zap</span><span class="punctuation delimiter">.</span><span class="function call">start</span><span class="punctuation bracket">(</span><span class="punctuation delimiter">.</span><span class="punctuation bracket">{</span>
+        <span class="punctuation delimiter">.</span><span class="variable member">threads</span> <span class="operator">=</span> <span class="number">2</span><span class="punctuation delimiter">,</span>
+        <span class="punctuation delimiter">.</span><span class="variable member">workers</span> <span class="operator">=</span> <span class="number">1</span><span class="punctuation delimiter">,</span>
+    <span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+<span class="punctuation bracket">}</span>
+</code></pre>
+<p>Inside the PredictorPackage struct, the function predictValue captures the body of the request, parses it with std.json.Parsed and then calls the Python function with it. Then, it stringify it and responds the request with a resultPrediction object.</p><pre><code class="zig"><span class="keyword modifier">pub</span> <span class="keyword">const</span> <span class="variable">valueToPredict</span> <span class="operator">=</span> <span class="keyword type">struct</span> <span class="punctuation bracket">{</span>
+    <span class="variable member">parameter1</span><span class="punctuation delimiter">:</span> <span class="type builtin">f64</span><span class="punctuation delimiter">,</span>
+    <span class="variable member">parameter2</span><span class="punctuation delimiter">:</span> <span class="type builtin">f64</span><span class="punctuation delimiter">,</span>
+<span class="punctuation bracket">}</span><span class="punctuation delimiter">;</span>
+
+<span class="keyword modifier">pub</span> <span class="keyword">const</span> <span class="variable">resultPrediction</span> <span class="operator">=</span> <span class="keyword type">struct</span> <span class="punctuation bracket">{</span>
+    <span class="variable member">predictedClass</span><span class="punctuation delimiter">:</span> <span class="type builtin">f64</span><span class="punctuation delimiter">,</span>
+<span class="punctuation bracket">}</span><span class="punctuation delimiter">;</span>
+
+<span class="keyword modifier">pub</span> <span class="keyword">const</span> <span class="variable">PredictorPackage</span> <span class="operator">=</span> <span class="keyword type">struct</span> <span class="punctuation bracket">{</span>
+    <span class="keyword">const</span> <span class="variable">Self</span> <span class="operator">=</span> <span class="keyword import">@This</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+    <span class="variable member">allocator</span><span class="punctuation delimiter">:</span> <span class="variable">Allocator</span><span class="punctuation delimiter">,</span>
+    <span class="variable member">doubles</span><span class="punctuation delimiter">:</span> <span class="punctuation bracket">[</span><span class="punctuation bracket">]</span><span class="type builtin">f64</span><span class="punctuation delimiter">,</span>
+    <span class="variable member">func</span><span class="punctuation delimiter">:</span> <span class="operator">*</span><span class="variable">c</span><span class="punctuation delimiter">.</span><span class="variable member">PyObject</span><span class="punctuation delimiter">,</span>
+
+    <span class="keyword modifier">pub</span> <span class="keyword function">fn</span> <span class="function">init</span><span class="punctuation bracket">(</span>
+        <span class="variable parameter">allocator</span><span class="punctuation delimiter">:</span> <span class="type">Allocator</span><span class="punctuation delimiter">,</span>
+        <span class="variable parameter">doubles</span><span class="punctuation delimiter">:</span> <span class="punctuation bracket">[</span><span class="punctuation bracket">]</span><span class="type builtin">f64</span><span class="punctuation delimiter">,</span>
+        <span class="variable parameter">func</span><span class="punctuation delimiter">:</span> <span class="operator">*</span><span class="variable">c</span><span class="punctuation delimiter">.</span><span class="variable member">PyObject</span><span class="punctuation delimiter">,</span>
+    <span class="punctuation bracket">)</span> <span class="variable">Self</span> <span class="punctuation bracket">{</span>
+        <span class="keyword return">return</span> <span class="punctuation delimiter">.</span><span class="punctuation bracket">{</span>
+            <span class="punctuation delimiter">.</span><span class="variable member">allocator</span> <span class="operator">=</span> <span class="variable">allocator</span><span class="punctuation delimiter">,</span>
+            <span class="punctuation delimiter">.</span><span class="variable member">doubles</span> <span class="operator">=</span> <span class="variable">doubles</span><span class="punctuation delimiter">,</span>
+            <span class="punctuation delimiter">.</span><span class="variable member">func</span> <span class="operator">=</span> <span class="variable">func</span><span class="punctuation delimiter">,</span>
+        <span class="punctuation bracket">}</span><span class="punctuation delimiter">;</span>
+    <span class="punctuation bracket">}</span>
+
+    <span class="keyword modifier">pub</span> <span class="keyword function">fn</span> <span class="function">predictValue</span><span class="punctuation bracket">(</span><span class="variable parameter">self</span><span class="punctuation delimiter">:</span> <span class="operator">*</span><span class="variable">Self</span><span class="punctuation delimiter">,</span> <span class="variable parameter">req</span><span class="punctuation delimiter">:</span> <span class="variable">zap</span><span class="punctuation delimiter">.</span><span class="variable member">Request</span><span class="punctuation bracket">)</span> <span class="type builtin">void</span> <span class="punctuation bracket">{</span>
+        <span class="variable">std</span><span class="punctuation delimiter">.</span><span class="variable member">log</span><span class="punctuation delimiter">.</span><span class="function call">warn</span><span class="punctuation bracket">(</span><span class="string">&quot;predict_value_requested&quot;</span><span class="punctuation delimiter">,</span> <span class="punctuation delimiter">.</span><span class="punctuation bracket">{</span><span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+        <span class="keyword conditional">if</span> <span class="punctuation bracket">(</span><span class="variable">std</span><span class="punctuation delimiter">.</span><span class="variable member">mem</span><span class="punctuation delimiter">.</span><span class="function call">eql</span><span class="punctuation bracket">(</span><span class="type builtin">u8</span><span class="punctuation delimiter">,</span> <span class="variable">req</span><span class="punctuation delimiter">.</span><span class="variable member">method</span><span class="operator">.?</span><span class="punctuation delimiter">,</span> <span class="string">&quot;POST&quot;</span><span class="punctuation bracket">)</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">{</span>
+            <span class="variable">std</span><span class="punctuation delimiter">.</span><span class="variable member">debug</span><span class="punctuation delimiter">.</span><span class="function call">print</span><span class="punctuation bracket">(</span><span class="string">&quot;Preparing to predict\n&quot;</span><span class="punctuation delimiter">,</span> <span class="punctuation delimiter">.</span><span class="punctuation bracket">{</span><span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+            <span class="variable">req</span><span class="punctuation delimiter">.</span><span class="function call">parseBody</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span> <span class="keyword exception">catch</span> <span class="punctuation bracket">|</span><span class="variable">err</span><span class="punctuation bracket">|</span> <span class="punctuation bracket">{</span>
+                <span class="variable">std</span><span class="punctuation delimiter">.</span><span class="variable member">log</span><span class="punctuation delimiter">.</span><span class="function call">err</span><span class="punctuation bracket">(</span><span class="string">&quot;Parse Body error: {any}. Expected if body is empty&quot;</span><span class="punctuation delimiter">,</span> <span class="punctuation delimiter">.</span><span class="punctuation bracket">{</span><span class="variable">err</span><span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+            <span class="punctuation bracket">}</span><span class="punctuation delimiter">;</span>
+
+            <span class="keyword conditional">if</span> <span class="punctuation bracket">(</span><span class="variable">req</span><span class="punctuation delimiter">.</span><span class="variable member">body</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">|</span><span class="variable">body</span><span class="punctuation bracket">|</span> <span class="punctuation bracket">{</span>
+                <span class="keyword">const</span> <span class="variable">maybe_user</span><span class="punctuation delimiter">:</span> <span class="operator">?</span><span class="variable">std</span><span class="punctuation delimiter">.</span><span class="variable member">json</span><span class="punctuation delimiter">.</span><span class="function call">Parsed</span><span class="punctuation bracket">(</span><span class="variable">std</span><span class="punctuation delimiter">.</span><span class="variable member">json</span><span class="punctuation delimiter">.</span><span class="variable member">Value</span><span class="punctuation bracket">)</span> <span class="operator">=</span> <span class="variable">std</span><span class="punctuation delimiter">.</span><span class="variable member">json</span><span class="punctuation delimiter">.</span><span class="function call">parseFromSlice</span><span class="punctuation bracket">(</span><span class="variable">std</span><span class="punctuation delimiter">.</span><span class="variable member">json</span><span class="punctuation delimiter">.</span><span class="variable member">Value</span><span class="punctuation delimiter">,</span> <span class="variable">self</span><span class="punctuation delimiter">.</span><span class="variable member">allocator</span><span class="punctuation delimiter">,</span> <span class="variable">body</span><span class="punctuation delimiter">,</span> <span class="punctuation delimiter">.</span><span class="punctuation bracket">{</span><span class="punctuation bracket">}</span><span class="punctuation bracket">)</span> <span class="keyword exception">catch</span> <span class="constant builtin">null</span><span class="punctuation delimiter">;</span>
+
+                <span class="keyword conditional">if</span> <span class="punctuation bracket">(</span><span class="variable">maybe_user</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">|</span><span class="variable">parsed_user</span><span class="punctuation bracket">|</span> <span class="punctuation bracket">{</span>
+                    <span class="keyword">defer</span> <span class="variable">parsed_user</span><span class="punctuation delimiter">.</span><span class="function call">deinit</span><span class="punctuation bracket">(</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+                    <span class="keyword conditional">if</span> <span class="punctuation bracket">(</span><span class="variable">parsed_user</span><span class="punctuation delimiter">.</span><span class="variable member">value</span><span class="punctuation delimiter">.</span><span class="variable member">object</span><span class="punctuation delimiter">.</span><span class="function call">get</span><span class="punctuation bracket">(</span><span class="string">&quot;parameter1&quot;</span><span class="punctuation bracket">)</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">|</span><span class="variable">parameter1</span><span class="punctuation bracket">|</span> <span class="punctuation bracket">{</span>
+                        <span class="variable">self</span><span class="punctuation delimiter">.</span><span class="variable member">doubles</span><span class="punctuation bracket">[</span><span class="number">0</span><span class="punctuation bracket">]</span> <span class="operator">=</span> <span class="variable">parameter1</span><span class="punctuation delimiter">.</span><span class="variable member">float</span><span class="punctuation delimiter">;</span>
+                    <span class="punctuation bracket">}</span>
+                    <span class="keyword conditional">if</span> <span class="punctuation bracket">(</span><span class="variable">parsed_user</span><span class="punctuation delimiter">.</span><span class="variable member">value</span><span class="punctuation delimiter">.</span><span class="variable member">object</span><span class="punctuation delimiter">.</span><span class="function call">get</span><span class="punctuation bracket">(</span><span class="string">&quot;parameter2&quot;</span><span class="punctuation bracket">)</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">|</span><span class="variable">parameter2</span><span class="punctuation bracket">|</span> <span class="punctuation bracket">{</span>
+                        <span class="variable">self</span><span class="punctuation delimiter">.</span><span class="variable member">doubles</span><span class="punctuation bracket">[</span><span class="number">1</span><span class="punctuation bracket">]</span> <span class="operator">=</span> <span class="variable">parameter2</span><span class="punctuation delimiter">.</span><span class="variable member">float</span><span class="punctuation delimiter">;</span>
+                    <span class="punctuation bracket">}</span>
+                    <span class="variable">std</span><span class="punctuation delimiter">.</span><span class="variable member">log</span><span class="punctuation delimiter">.</span><span class="function call">info</span><span class="punctuation bracket">(</span><span class="string">&quot;Parameter1: {?}&quot;</span><span class="punctuation delimiter">,</span> <span class="punctuation delimiter">.</span><span class="punctuation bracket">{</span><span class="variable">self</span><span class="punctuation delimiter">.</span><span class="variable member">doubles</span><span class="punctuation bracket">[</span><span class="number">0</span><span class="punctuation bracket">]</span><span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+                    <span class="variable">std</span><span class="punctuation delimiter">.</span><span class="variable member">log</span><span class="punctuation delimiter">.</span><span class="function call">info</span><span class="punctuation bracket">(</span><span class="string">&quot;Parameter2: {?}&quot;</span><span class="punctuation delimiter">,</span> <span class="punctuation delimiter">.</span><span class="punctuation bracket">{</span><span class="variable">self</span><span class="punctuation delimiter">.</span><span class="variable member">doubles</span><span class="punctuation bracket">[</span><span class="number">1</span><span class="punctuation bracket">]</span><span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+                <span class="punctuation bracket">}</span> <span class="keyword conditional">else</span> <span class="punctuation bracket">{</span>
+                    <span class="variable">std</span><span class="punctuation delimiter">.</span><span class="variable member">log</span><span class="punctuation delimiter">.</span><span class="function call">err</span><span class="punctuation bracket">(</span><span class="string">&quot;Failed to parse JSON&quot;</span><span class="punctuation delimiter">,</span> <span class="punctuation delimiter">.</span><span class="punctuation bracket">{</span><span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+                <span class="punctuation bracket">}</span>
+            <span class="punctuation bracket">}</span>
+
+            <span class="comment">// predict</span>
+
+            <span class="variable">std</span><span class="punctuation delimiter">.</span><span class="variable member">debug</span><span class="punctuation delimiter">.</span><span class="function call">print</span><span class="punctuation bracket">(</span><span class="string">&quot;vector to predict: {any}\n&quot;</span><span class="punctuation delimiter">,</span> <span class="punctuation delimiter">.</span><span class="punctuation bracket">{</span><span class="variable">self</span><span class="punctuation delimiter">.</span><span class="variable member">doubles</span><span class="punctuation bracket">[</span><span class="number">0</span><span class="operator">..</span><span class="punctuation bracket">]</span><span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+            <span class="keyword">const</span> <span class="variable">pList</span> <span class="operator">=</span> <span class="keyword exception">try</span> <span class="function call">prepareList</span><span class="punctuation bracket">(</span><span class="variable">self</span><span class="punctuation delimiter">.</span><span class="variable member">doubles</span><span class="punctuation bracket">[</span><span class="number">0</span><span class="operator">..</span><span class="punctuation bracket">]</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+            <span class="keyword">const</span> <span class="variable">result</span> <span class="operator">=</span> <span class="keyword exception">try</span> <span class="function call">evaluteResult</span><span class="punctuation bracket">(</span><span class="variable">pList</span><span class="punctuation delimiter">,</span> <span class="variable">self</span><span class="punctuation delimiter">.</span><span class="variable member">func</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+            <span class="variable">std</span><span class="punctuation delimiter">.</span><span class="variable member">debug</span><span class="punctuation delimiter">.</span><span class="function call">print</span><span class="punctuation bracket">(</span><span class="string">&quot;resultado: {any}\n&quot;</span><span class="punctuation delimiter">,</span> <span class="punctuation delimiter">.</span><span class="punctuation bracket">{</span><span class="variable">result</span><span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation delimiter">;</span>
+
+            <span class="comment">//transform prediction into json</span>
+            <span class="keyword">const</span> <span class="variable">resultSend</span> <span class="operator">=</span> <span class="variable">resultPrediction</span><span class="punctuation bracket">{</span> <span class="punctuation delimiter">.</span><span class="variable member">predictedClass</span> <span class="operator">=</span> <span class="variable">result</span> <span class="punctuation bracket">}</span><span class="punctuation delimiter">;</span>
+
+            <span class="keyword">var</span> <span class="variable">buf</span><span class="punctuation delimiter">:</span> <span class="punctuation bracket">[</span><span class="number">100</span><span class="punctuation bracket">]</span><span class="type builtin">u8</span> <span class="operator">=</span> <span class="constant builtin">undefined</span><span class="punctuation delimiter">;</span>
+            <span class="keyword">var</span> <span class="variable">json_to_send</span><span class="punctuation delimiter">:</span> <span class="punctuation bracket">[</span><span class="punctuation bracket">]</span><span class="keyword">const</span> <span class="type builtin">u8</span> <span class="operator">=</span> <span class="constant builtin">undefined</span><span class="punctuation delimiter">;</span>
+            <span class="keyword conditional">if</span> <span class="punctuation bracket">(</span><span class="variable">zap</span><span class="punctuation delimiter">.</span><span class="function call">stringifyBuf</span><span class="punctuation bracket">(</span><span class="operator">&amp;</span><span class="variable">buf</span><span class="punctuation delimiter">,</span> <span class="variable">resultSend</span><span class="punctuation delimiter">,</span> <span class="punctuation delimiter">.</span><span class="punctuation bracket">{</span><span class="punctuation bracket">}</span><span class="punctuation bracket">)</span><span class="punctuation bracket">)</span> <span class="punctuation bracket">|</span><span class="variable">json</span><span class="punctuation bracket">|</span> <span class="punctuation bracket">{</span>
+                <span class="variable">json_to_send</span> <span class="operator">=</span> <span class="variable">json</span><span class="punctuation delimiter">;</span>
+            <span class="punctuation bracket">}</span> <span class="keyword conditional">else</span> <span class="punctuation bracket">{</span>
+                <span class="variable">json_to_send</span> <span class="operator">=</span> <span class="string">&quot;null&quot;</span><span class="punctuation delimiter">;</span>
+            <span class="punctuation bracket">}</span>
+
+            <span class="comment">// send prediction back to the client</span>
+            <span class="variable">req</span><span class="punctuation delimiter">.</span><span class="function call">setContentType</span><span class="punctuation bracket">(</span><span class="punctuation delimiter">.</span><span class="constant">JSON</span><span class="punctuation bracket">)</span> <span class="keyword exception">catch</span> <span class="keyword return">return</span><span class="punctuation delimiter">;</span>
+            <span class="variable">req</span><span class="punctuation delimiter">.</span><span class="function call">sendBody</span><span class="punctuation bracket">(</span><span class="variable">json_to_send</span><span class="punctuation bracket">)</span> <span class="keyword exception">catch</span> <span class="keyword return">return</span><span class="punctuation delimiter">;</span>
+        <span class="punctuation bracket">}</span>
+    <span class="punctuation bracket">}</span>
+<span class="punctuation bracket">}</span><span class="punctuation delimiter">;</span>
+
+</code></pre>
+<p>The full main.zig file, as well as a dockerfile with all of the components, can be found in the <a href="https://github.com/vinybrasil/zig-sklearn" target="_blank">repository of the project</a>.</p><p>After building the project (<strong>zig build run</strong>) and moving the libpredict.so and the model.pkl to the same folder as the executable, we can test the API with cURL:</p><pre><code class="bash"><span class="constant">curl</span> <span class="constant">-X</span> <span class="constant">POST</span> <span class="constant">http://localhost:3000/predict</span> \
+     <span class="constant">-H</span> <span class="constant">&quot;Content-Type: application/json&quot;</span> \
+     <span class="constant">--data</span> <span class="constant">&apos;{&quot;parameter1&quot;: -1.3, &quot;parameter2&quot;: -1.4}&apos;</span>
+</code></pre>
+<p>It should return the following response:</p><pre><code class="bash">{
+    <span class="constant">&quot;predictedClass&quot;:</span> <span class="constant">0e0</span>
+}
+</code></pre>
+<p>And that’s it. Fell free to contact me via Linkedin or to open a PR on the GitHub repo if you find something wrong. Keep on learning :D</p></div>
+  <div id="footnotes"></div>
+  <div>
+    <small><a href="/index.xml" rel="alternate" type="application/rss+xml">RSS feed</a></small>
+  </div>
+  <hr>
+  <div id="prev-next">
+    <span>
+      <a href="/blog/websockets-kafka/">←
+        <span>Building a real-time Websocket webapp with Kafka and Javascript</span></a>
+    </span>
+    <span></span>
+    <span></span>
+    <small>&nbsp; or &nbsp;</small>
+    <small>
+      <a href="/">Back to the Homepage</a>
+    </small>
+  </div>
+
+    </div>
+  </body>
+</html>
