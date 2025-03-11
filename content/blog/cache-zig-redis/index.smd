@@ -1,0 +1,73 @@
+---
+.title = "Caching API responses with Redis in Zig",
+.description = "",
+.author = "Vinicyus Brasil",
+.layout = "post.shtml",
+.date = @date("2025-03-11T00:00:00"),
+.draft = true,
+---
+
+## Introduction
+
+## 
+
+```zig 
+    var users = std.AutoHashMap(u32, entities.User).init(allocator);
+    defer users.deinit();
+
+    try users.put(1, entities.User{
+        .id = 1,
+        .name = "Alice",
+        .email = "alice@example.com",
+        .age = 25,
+    });
+    try users.put(2, entities.User{
+        .id = 2,
+        .name = "Bob",
+        .email = "bob@example.com",
+        .age = 30,
+    });
+    try users.put(3, entities.User{
+        .id = 3,
+        .name = "Charlie",
+        .email = "charlie@example.com",
+        .age = 22,
+    });
+```
+
+The Zig version used is 0.14. We'll be using two libraries: okredis, a client for Redis written in Zig, and zap, a blazing fast webframework. 
+
+First we need to connect 
+```zig 
+pub fn main() !void {
+    var client: Client = undefined;
+
+    const addr = try net.Address.parseIp4("172.20.0.2", 6379);
+    // to run outside docker
+    //const addr = try net.Address.parseIp4("127.0.0.1", 6379);
+    const connection = try net.tcpConnectToAddress(addr);
+
+    try client.init(connection);
+    defer client.close();
+
+    const redischace: RedisCache = RedisCache{
+        .ttl = "30",
+        .client = client,
+    };
+}
+```
+
+```
+{
+    "id": "2",
+    "value": "{\"id\":2,\"name\":\"Bob\",\"email\":\"bob@example.com\",\"age\":30,\"timestamp\":1741712135}"
+}
+```
+
+
+```
+{
+    "id": "1",
+    "value": ""
+}
+```
