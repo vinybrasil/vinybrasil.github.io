@@ -27,7 +27,7 @@
   <p class="post-byline">
     <span :text="$page.date.format('January 02, 2006')"></span>
     •
-    <span :text="$page.wordCount().div(220).plus(1)"></span>
+    <span :text="$page.wordCount().div(400).plus(1)"></span>
     min read • by
     <b :text="$page.author"></b>
     <span :if="$page.custom.get?('coauthor')">
