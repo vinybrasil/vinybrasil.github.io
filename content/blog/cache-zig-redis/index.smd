@@ -15,7 +15,7 @@ to cache the last record fetched so we don't have to perform another READ operat
 To do this caching, we can use Redis, a advanced key-value store that works as a in memory database. It is really fast and combines with our choice for the backend: `zap`, a blazingly fast 
 webframework written in Zig. 
 
-This project is heavily inspired by this one but we'll code it in Zig, a system programming language capable of handling thousands of requests (the original one was
+This project is heavily inspired by [this post](https://medium.com/@aarav.gupta9/unlocking-the-power-of-redis-using-redis-with-python-ff09d459dad2) but we'll code it in Zig, a system programming language capable of handling thousands of requests (the original one was
 written in Python). The Zig version used is 0.14 and the redis version is 7.0.15. In this blogpost there's only a few snippets of the code since most of it is not that 
 important but you can check the full code [here](https://github.com/vinybrasil/cache-redis-zig).
 
