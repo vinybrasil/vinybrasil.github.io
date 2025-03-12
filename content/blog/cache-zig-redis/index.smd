@@ -1,10 +1,10 @@
 ---
 .title = "Caching API responses with Redis in Zig",
-.description = "Using Redis to cache responses from Zap, the Zig blazing fast webframework",
+.description = "Using Redis to cache responses from Zap, the Zig blazingly fast webframework",
 .author = "Vinicyus Brasil",
 .layout = "post.shtml",
 .date = @date("2025-03-11T00:00:00"),
-.draft = true,
+.draft = false,
 ---
 
 ## Introduction
@@ -12,12 +12,12 @@
 When fetching a database, our server must perform a READ operation. Every transation has a cost of time and money (computational cost in the cloud). One way of reducing this cost it's 
 to cache the last record fetched so we don't have to perform another READ operation. This can help when the same record is requested multiple times.
 
-To do this caching, we can use Redis, a advanced key-value store that works as a in memory database. It is really fast and combines with our choice for the backend: `zap`, a blazing fast 
+To do this caching, we can use Redis, a advanced key-value store that works as a in memory database. It is really fast and combines with our choice for the backend: `zap`, a blazingly fast 
 webframework written in Zig. 
 
 This project is heavily inspired by this one but we'll code it in Zig, a system programming language capable of handling thousands of requests (the original one was
-written in Python). The Zig version used is 0.14 and the redis version is ``. The full code is available [here](https://github.com/vinybrasil/cache-redis-zig). In this blogpost there's only a few snippets of the code since most of it is not that 
-important.
+written in Python). The Zig version used is 0.14 and the redis version is 7.0.15. In this blogpost there's only a few snippets of the code since most of it is not that 
+important but you can check the full code [here](https://github.com/vinybrasil/cache-redis-zig).
 
 OBS: since Redis is also a database, I'll use the term "database" referring to the database where the data is stored (in our case a hashmap) and use the term "redis" refering 
 to the Redis database.
@@ -125,7 +125,6 @@ The "EX" is the expiring time in seconds, also called "time to live" (ttl). The 
 
 To test it, we'll make a GET request with the following body:
 ```
-
 {
     "id": "2"
 }
@@ -149,4 +148,5 @@ If we call an ID that is not in the database, this should be the return.
     "value": ""
 }
 ```
-I just included the most important parts of the code here because I don't want to tire my beloved readers but, as always, the full code is on this [public repository](https://github.com/vinybrasil/cache-redis-zig). Keep on learning :D
+I just included the most important parts of the code here because I don't want to tire my beloved readers but, as always, the full code is on this [public repository](https://github.com/vinybrasil/cache-redis-zig). 
+And that's all folks. Keep on learning :D
