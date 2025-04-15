@@ -1,11 +1,11 @@
-configura o github pages pra pegar do /docs e builda com 
+to build it:
 
-zig build install -p docs
+```
+hugo build -d docs/
+```
 
 to run locally:
 
-zig build serve
-
-alternativas: 
-
-https://mystmd.org/guide/quickstart
+```
+hugo serve
+```

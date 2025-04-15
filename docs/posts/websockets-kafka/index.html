@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en-us"><head><meta charset="utf-8">
+<meta http-equiv="content-type" content="text/html">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title itemprop="name">Building a real-time Websocket webapp with Kafka and Javascript | Viny Brasil&#39;s blog</title>
+<meta property="og:title" content="Building a real-time Websocket webapp with Kafka and Javascript | Viny Brasil&#39;s blog" />
+<meta name="twitter:title" content="Building a real-time Websocket webapp with Kafka and Javascript | Viny Brasil&#39;s blog" />
+<meta itemprop="name" content="Building a real-time Websocket webapp with Kafka and Javascript | Viny Brasil&#39;s blog" />
+<meta name="application-name" content="Building a real-time Websocket webapp with Kafka and Javascript | Viny Brasil&#39;s blog" />
+<meta property="og:site_name" content="Viny Brasil&#39;s blog" />
+
+<meta name="description" content="Given a change in the database, show the payload to the clients via websockets; This project can be used in chatbots, time series applications">
+<meta itemprop="description" content="Given a change in the database, show the payload to the clients via websockets; This project can be used in chatbots, time series applications" />
+<meta property="og:description" content="Given a change in the database, show the payload to the clients via websockets; This project can be used in chatbots, time series applications" />
+<meta name="twitter:description" content="Given a change in the database, show the payload to the clients via websockets; This project can be used in chatbots, time series applications" />
+
+<meta property="og:locale" content="en-us" />
+<meta name="language" content="en-us" />
+
+  <link rel="alternate" hreflang="en-us" href="https://vinybrasil.github.io/posts/websockets-kafka/" title="English" />
+
+
+
+
+
+    
+    
+    
+
+    <meta property="og:type" content="article" />
+    <meta property="og:article:published_time" content=2025-01-06T00:00:00Z />
+    <meta property="article:published_time" content=2025-01-06T00:00:00Z />
+    <meta property="og:url" content="https://vinybrasil.github.io/posts/websockets-kafka/" />
+
+    
+    <meta property="og:article:author" content="Vinicyus Brasil" />
+    <meta property="article:author" content="Vinicyus Brasil" />
+    <meta name="author" content="Vinicyus Brasil" />
+    
+    
+
+    
+
+    <script defer type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "Article",
+        "headline": "Building a real-time Websocket webapp with Kafka and Javascript",
+        "author": {
+        "@type": "Person",
+        "name": ""
+        },
+        "datePublished": "2025-01-06",
+        "description": "Given a change in the database, show the payload to the clients via websockets; This project can be used in chatbots, time series applications",
+        "wordCount":  2177 ,
+        "mainEntityOfPage": "True",
+        "dateModified": "2025-01-06",
+        "image": {
+        "@type": "imageObject",
+        "url": ""
+        },
+        "publisher": {
+        "@type": "Organization",
+        "name": "Viny Brasil\u0027s blog"
+        }
+    }
+    </script>
+
+
+<meta name="generator" content="Hugo 0.146.4">
+
+    
+    <meta property="og:url" content="https://vinybrasil.github.io/posts/websockets-kafka/">
+  <meta property="og:site_name" content="Viny Brasil&#39;s blog">
+  <meta property="og:title" content="Building a real-time Websocket webapp with Kafka and Javascript">
+  <meta property="og:description" content="Given a change in the database, show the payload to the clients via websockets; This project can be used in chatbots, time series applications">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2025-01-06T00:00:00+00:00">
+    <meta property="article:modified_time" content="2025-01-06T00:00:00+00:00">
+
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Building a real-time Websocket webapp with Kafka and Javascript">
+  <meta name="twitter:description" content="Given a change in the database, show the payload to the clients via websockets; This project can be used in chatbots, time series applications">
+
+
+    
+
+    <link rel="canonical" href="https://vinybrasil.github.io/posts/websockets-kafka/">
+    <link href="/style.min.42e37435fa386b24c4c2ba533734722ef928d7f110c4e2a59f8b1aed70a21b34.css" rel="stylesheet">
+    <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
+
+    
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+    <link rel="mask-icon" href="/icons/safari-pinned-tab.svg">
+    <link rel="shortcut icon" href="/favicon.ico">
+
+
+
+
+<link rel="manifest" href="https://vinybrasil.github.io/site.webmanifest">
+
+<meta name="msapplication-config" content="/browserconfig.xml">
+<meta name="msapplication-TileColor" content="#2d89ef">
+<meta name="theme-color" content="#434648">
+
+    
+    <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg">
+
+    
+    
+      <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y0TCWKTPYJ"></script>
+      <script>
+        var doNotTrack = false;
+        if ( false ) {
+          var dnt = (navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack);
+          var doNotTrack = (dnt == "1" || dnt == "yes");
+        }
+        if (!doNotTrack) {
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-Y0TCWKTPYJ');
+        }
+      </script>
+    
+</head>
+<body data-theme = "dark" class="notransition">
+
+<script src="/js/theme.min.8961c317c5b88b953fe27525839672c9343f1058ab044696ca225656c8ba2ab0.js" integrity="sha256-iWHDF8W4i5U/4nUlg5ZyyTQ/EFirBEaWyiJWVsi6KrA="></script>
+
+<div class="navbar" role="navigation">
+    <nav class="menu" aria-label="Main Navigation">
+        <a href="https://vinybrasil.github.io/" class="logo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" 
+viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" 
+stroke-linejoin="round" class="feather feather-home">
+<title>Home</title>
+<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+<polyline points="9 22 9 12 15 12 15 22"></polyline>
+</svg>
+        </a>
+        <input type="checkbox" id="menu-trigger" class="menu-trigger" />
+        <label for="menu-trigger">
+            <span class="menu-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7L3.40726 7"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488L3.49301 3.51488"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"></path><path stroke-linecap="round" stroke-linejoin="round" d="M0.5 12.5V1.5C0.5 0.947715 0.947715 0.5 1.5 0.5H12.5C13.0523 0.5 13.5 0.947715 13.5 1.5V12.5C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C0.947715 13.5 0.5 13.0523 0.5 12.5Z"></path></svg>
+            </span>
+        </label>
+
+        <div class="trigger">
+            <ul class="trigger-container">
+                
+                
+                <li>
+                    <a class="menu-link " href="/">
+                        Home
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link active" href="/posts/">
+                        Posts
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="/pages/about/">
+                        About
+                    </a>
+                    
+                </li>
+                
+                <li class="menu-separator">
+                    <span>|</span>
+                </li>
+                
+                
+            </ul>
+            <a id="mode" href="#">
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
+<title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
+<title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
+            </a>
+        </div>
+    </nav>
+</div>
+
+<div class="wrapper post">
+    <main class="page-content" aria-label="Content">
+        <article>
+            <header class="header">
+                <h1 class="header-title">Building a real-time Websocket webapp with Kafka and Javascript</h1>
+                
+                
+                
+                <div class="post-meta">
+                    <time datetime="2025-01-06T00:00:00&#43;00:00" itemprop="datePublished"> Jan 6, 2025 </time>
+                </div>
+                
+            </header>
+            
+    
+    <details class="toc" ZgotmplZ>
+        <summary><b>Table of Contents</b></summary>
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#introduction">Introduction</a></li>
+    <li><a href="#setting-up-kafka-connector-and-debezium-the-docker-compose-file">Setting up Kafka Connector and debezium (the docker-compose file)</a></li>
+    <li><a href="#setting-up-the-database">Setting up the database</a></li>
+    <li><a href="#api-to-send-request-to-database">API to send request to database</a></li>
+    <li><a href="#js-websocket-server">JS Websocket server</a></li>
+    <li><a href="#js-websocket-client">JS Websocket client</a></li>
+    <li><a href="#testing">Testing</a></li>
+  </ul>
+</nav>
+    </details>
+            <div class="page-content">
+                <h2 id="introduction">Introduction</h2>
+<p>Suppose we have a API that generates a lot of information whom we must store in a database and show them to clients. This information updates every few seconds
+and this sort of system is call a real-time app (in reality, it takes some seconds, so it&rsquo;s a near real time app). Some applications that can use this sort of design are:</p>
+<ul>
+<li>
+<p>chatbots: the API is a LLM that receives an input and send it&rsquo;s response to the client;</p>
+</li>
+<li>
+<p>systems with time series: the API fetches data from somewhere (like some temperature reading) and updates in real time to the client;</p>
+</li>
+<li>
+<p>systems with position in space: the API fetches data from a train (or a car) and updates show them to someone waiting (like a Uber passenger);</p>
+</li>
+<li>
+<p>sports betting: the API calculate the odds of something happen in the game and updates it to the client.</p>
+</li>
+</ul>
+<p>In this project we&rsquo;ll build a near real-time app. We&rsquo;ve chosen to build a simple sports betting app that will only show the clients updated odds.
+The webapp will send a <code>websocket message</code> to their clients after
+receiving a message from a Kafka topic. This message comes from a <code>new record being inserted in the database</code>
+from a API and captured by Kafka-Connect with the debezium plugin.</p>
+<p>The design of the system follows: a API receives external data and insert it to the database, Kafka Connect get the payload inserted and send it to
+a Kafka topic. A websocket server is consuming the messages from this topic and, when receives a message, send it to the websockets clients.
+This design allows the system to be scalable since some of the components can work asynchronously, therefore the ones with more load can be horizontally scaled.
+The image below ilustrates it.
+<a href="$image.asset%28%22websocket.png%22%29"></a></p>
+<p>There are four main steps to build this system:</p>
+<ol>
+<li>setup Kafka and Kafka connect with the debezium plugin;</li>
+<li>setup the database (MySQL) and the scripts to initialize it correctly;</li>
+<li>build the API to create the data;</li>
+<li>create the websocket server and the client;</li>
+</ol>
+<p>Here I&rsquo;ll only share some parts of the code because the full project is too large and the full code is on
+this <a href="https://github.com/vinybrasil/websocket-kafka">Github repository</a>.</p>
+<h2 id="setting-up-kafka-connector-and-debezium-the-docker-compose-file">Setting up Kafka Connector and debezium (the docker-compose file)</h2>
+<p>To use Kafka we need Zookeeper, also included in the following docker-compose file. The file also creates the database and uses default password and username.
+Kafka-Connect installing the debezium plugin is where the magic happens. The plugin is responsable for get the data inserted in the database and push it to a
+Kafka topic. The version of docker used is 20.10.12, the docker-compose version is v2.29.1-desktop.1 and here&rsquo;s the code for the docker-compose file.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">services:
+</span></span><span class="line"><span class="cl">  zookeeper:
+</span></span><span class="line"><span class="cl">    image: confluentinc/cp-zookeeper:7.8.0
+</span></span><span class="line"><span class="cl">    container_name: zookeeper
+</span></span><span class="line"><span class="cl">    ports:
+</span></span><span class="line"><span class="cl">      - <span class="s2">&#34;2181:2181&#34;</span>
+</span></span><span class="line"><span class="cl">    environment:
+</span></span><span class="line"><span class="cl">      ZOOKEEPER_CLIENT_PORT: <span class="m">2181</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  kafka:
+</span></span><span class="line"><span class="cl">    image: confluentinc/cp-kafka:7.8.0
+</span></span><span class="line"><span class="cl">    container_name: kafka
+</span></span><span class="line"><span class="cl">    ports:
+</span></span><span class="line"><span class="cl">      - <span class="s2">&#34;9092:9092&#34;</span>
+</span></span><span class="line"><span class="cl">    environment:
+</span></span><span class="line"><span class="cl">      KAFKA_BROKER_ID: <span class="m">1</span>
+</span></span><span class="line"><span class="cl">      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+</span></span><span class="line"><span class="cl">      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+</span></span><span class="line"><span class="cl">      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+</span></span><span class="line"><span class="cl">      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+</span></span><span class="line"><span class="cl">      KAFKA_AUTO_CREATE_TOPICS_ENABLE: <span class="s2">&#34;true&#34;</span>
+</span></span><span class="line"><span class="cl">      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: <span class="m">1</span>
+</span></span><span class="line"><span class="cl">      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: <span class="m">1</span>
+</span></span><span class="line"><span class="cl">      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: <span class="m">1</span>
+</span></span><span class="line"><span class="cl">      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: <span class="m">100</span>
+</span></span><span class="line"><span class="cl">    depends_on:
+</span></span><span class="line"><span class="cl">      - zookeeper
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  mysql:
+</span></span><span class="line"><span class="cl">    image: mysql:8.0
+</span></span><span class="line"><span class="cl">    container_name: mysql
+</span></span><span class="line"><span class="cl">    ports:
+</span></span><span class="line"><span class="cl">      - 3306:3306
+</span></span><span class="line"><span class="cl">    environment:
+</span></span><span class="line"><span class="cl">     - <span class="nv">MYSQL_ROOT_PASSWORD</span><span class="o">=</span>debezium
+</span></span><span class="line"><span class="cl">     - <span class="nv">MYSQL_USER</span><span class="o">=</span>mysqluser
+</span></span><span class="line"><span class="cl">     - <span class="nv">MYSQL_PASSWORD</span><span class="o">=</span>mysqlpw
+</span></span><span class="line"><span class="cl">    volumes:
+</span></span><span class="line"><span class="cl">     - <span class="si">${</span><span class="nv">PWD</span><span class="si">}</span>/data/mysql:/docker-entrypoint-initdb.d
+</span></span><span class="line"><span class="cl">     - <span class="si">${</span><span class="nv">PWD</span><span class="si">}</span>/data:/data
+</span></span><span class="line"><span class="cl">     - ./mysql-init:/docker-entrypoint-initdb.d
+</span></span><span class="line"><span class="cl">  schema-registry:
+</span></span><span class="line"><span class="cl">    image: confluentinc/cp-schema-registry:7.8.0
+</span></span><span class="line"><span class="cl">    container_name: schema-registry
+</span></span><span class="line"><span class="cl">    ports:
+</span></span><span class="line"><span class="cl">      - <span class="s2">&#34;8081:8081&#34;</span>
+</span></span><span class="line"><span class="cl">    depends_on:
+</span></span><span class="line"><span class="cl">      - kafka
+</span></span><span class="line"><span class="cl">    environment:
+</span></span><span class="line"><span class="cl">      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+</span></span><span class="line"><span class="cl">      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka:29092
+</span></span><span class="line"><span class="cl">  kafka-connect:
+</span></span><span class="line"><span class="cl">    image: confluentinc/cp-kafka-connect-base:7.8.0
+</span></span><span class="line"><span class="cl">    container_name: kafka-connect
+</span></span><span class="line"><span class="cl">    depends_on:
+</span></span><span class="line"><span class="cl">      - kafka
+</span></span><span class="line"><span class="cl">      - schema-registry
+</span></span><span class="line"><span class="cl">    ports:
+</span></span><span class="line"><span class="cl">      - 8083:8083
+</span></span><span class="line"><span class="cl">    environment:
+</span></span><span class="line"><span class="cl">      CONNECT_BOOTSTRAP_SERVERS: <span class="s2">&#34;kafka:29092&#34;</span>
+</span></span><span class="line"><span class="cl">      CONNECT_REST_PORT: <span class="m">8083</span>
+</span></span><span class="line"><span class="cl">      CONNECT_GROUP_ID: kafka-connect
+</span></span><span class="line"><span class="cl">      CONNECT_CONFIG_STORAGE_TOPIC: _connect-configs
+</span></span><span class="line"><span class="cl">      CONNECT_OFFSET_STORAGE_TOPIC: _connect-offsets
+</span></span><span class="line"><span class="cl">      CONNECT_STATUS_STORAGE_TOPIC: _connect-status
+</span></span><span class="line"><span class="cl">      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+</span></span><span class="line"><span class="cl">      CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+</span></span><span class="line"><span class="cl">      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: <span class="s1">&#39;http://schema-registry:8081&#39;</span>
+</span></span><span class="line"><span class="cl">      CONNECT_REST_ADVERTISED_HOST_NAME: <span class="s2">&#34;kafka-connect&#34;</span>
+</span></span><span class="line"><span class="cl">      CONNECT_LOG4J_APPENDER_STDOUT_LAYOUT_CONVERSIONPATTERN: <span class="s2">&#34;[%d] %p %X{connector.context}%m (%c:%L)%n&#34;</span>
+</span></span><span class="line"><span class="cl">      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: <span class="s2">&#34;1&#34;</span>
+</span></span><span class="line"><span class="cl">      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: <span class="s2">&#34;1&#34;</span>
+</span></span><span class="line"><span class="cl">      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: <span class="s2">&#34;1&#34;</span>
+</span></span><span class="line"><span class="cl">      CONNECT_PLUGIN_PATH: /usr/share/java,/usr/share/confluent-hub-components,/data/connect-jars
+</span></span><span class="line"><span class="cl">    volumes:
+</span></span><span class="line"><span class="cl">      - <span class="nv">$PWD</span>/data:/data
+</span></span><span class="line"><span class="cl">    command:
+</span></span><span class="line"><span class="cl">      - bash
+</span></span><span class="line"><span class="cl">      - -c
+</span></span><span class="line"><span class="cl">      - <span class="p">|</span>
+</span></span><span class="line"><span class="cl">        <span class="nb">echo</span> <span class="s2">&#34;Installing Connector&#34;</span>
+</span></span><span class="line"><span class="cl">        confluent-hub install --no-prompt debezium/debezium-connector-mysql:1.7.0
+</span></span><span class="line"><span class="cl">        <span class="c1">#</span>
+</span></span><span class="line"><span class="cl">        <span class="nb">echo</span> <span class="s2">&#34;Launching Kafka Connect worker&#34;</span>
+</span></span><span class="line"><span class="cl">        /etc/confluent/docker/run <span class="p">&amp;</span>
+</span></span><span class="line"><span class="cl">        <span class="c1">#</span>
+</span></span><span class="line"><span class="cl">        sleep infinity
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">networks:
+</span></span><span class="line"><span class="cl">  my-network-name:
+</span></span><span class="line"><span class="cl">   name: websockets
+</span></span></code></pre></div><p>Note we are naming the network that docker will use. It is importante because all of the services must be in the same network. To run it:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">docker-compose up -f docker-compose.yml -d 
+</span></span></code></pre></div><h2 id="setting-up-the-database">Setting up the database</h2>
+<p>Each game will use a table in the database &ldquo;gameodds&rdquo; and the table will be called game_{gameid}, where {gameid} is a int
+identifing each game. By creating the database we also need to grant the privileges to the user (please, don&rsquo;t let
+credentials like this explicity in the code in production, you&rsquo;re gonna get yourself fired).</p>
+<p>I chose MySQL because it&rsquo;s simple but you can use another database since debezium has plugins in their <a href="https://debezium.io/documentation/reference/stable/connectors/index.html">website</a> for MongoDB, PostgreSQL etc.
+The following script file will to be in the &lsquo;mysql-init&rsquo; folder and it will run every time docker-compose up.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">CREATE USER <span class="s1">&#39;debezium&#39;</span>@<span class="s1">&#39;%&#39;</span> IDENTIFIED BY <span class="s1">&#39;dbz&#39;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">GRANT ALL PRIVILEGES ON *.* TO <span class="s1">&#39;debezium&#39;</span>@<span class="s1">&#39;%&#39;</span> WITH GRANT OPTION<span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">FLUSH PRIVILEGES<span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">CREATE DATABASE IF NOT EXISTS gameodds<span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">USE gameodds<span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">CREATE TABLE IF NOT EXISTS available_games <span class="o">(</span>
+</span></span><span class="line"><span class="cl">    row_id INT AUTO_INCREMENT PRIMARY KEY,
+</span></span><span class="line"><span class="cl">    game_id VARCHAR<span class="o">(</span>50<span class="o">)</span> NOT NULL,
+</span></span><span class="line"><span class="cl">    game_id_name VARCHAR<span class="o">(</span>50<span class="o">)</span> NOT NULL,
+</span></span><span class="line"><span class="cl">    connector_name VARCHAR<span class="o">(</span>100<span class="o">)</span> NOT NULL,
+</span></span><span class="line"><span class="cl">    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+</span></span><span class="line"><span class="cl"><span class="o">)</span><span class="p">;</span>
+</span></span></code></pre></div><h2 id="api-to-send-request-to-database">API to send request to database</h2>
+<p>The API needs two routes:</p>
+<ul>
+<li>
+<p>/games: the game odds will be stored in a table called &ldquo;available_games&rdquo;. Calling a POST request to this route will create the table and then
+send a POST request to Kafka-Connect to create the connector,
+which will create the topic in Kafka and send the payloads;</p>
+</li>
+<li>
+<p>/sendodd: this route generates a random payload and inserts it into the database (in a real scenario, it would calculate the odd based on some
+external data);</p>
+</li>
+</ul>
+<p>A simple payload will be sent to the database with some random values:</p>
+<pre tabindex="0"><code>{
+    &#34;game_id&#34;: &#34;123121&#34;,
+    &#34;odd1&#34;: 1.07,
+    &#34;odd2&#34;: 3.54,
+    &#34;odd3&#34;: 0.96,
+    &#34;odd4&#34;: 3.34,
+    &#34;odd5&#34;: 1.96
+}
+</code></pre><p>The simpler way to create the API for this project it&rsquo;s by using FastAPI. When the program starts, it will run a function called &ldquo;startup_event&rdquo;
+and connect the program to the database.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">mysql.connector</span> 
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">random</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">requests</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">fastapi</span> <span class="kn">import</span> <span class="n">FastAPI</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">app</span> <span class="o">=</span> <span class="n">FastAPI</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">KAFKA_CONNECT_IP</span> <span class="o">=</span> <span class="s2">&#34;172.18.0.6&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="n">MYSQL_IP</span> <span class="o">=</span> <span class="s2">&#34;172.18.0.2&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nd">@app.on_event</span><span class="p">(</span><span class="s2">&#34;startup&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="k">async</span> <span class="k">def</span> <span class="nf">startup_event</span><span class="p">():</span>
+</span></span><span class="line"><span class="cl">    <span class="k">global</span> <span class="n">mydb</span>
+</span></span><span class="line"><span class="cl">    <span class="n">mydb</span> <span class="o">=</span> <span class="n">mysql</span><span class="o">.</span><span class="n">connector</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">    <span class="n">host</span><span class="o">=</span><span class="n">MYSQL_IP</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="n">user</span><span class="o">=</span><span class="s2">&#34;debezium&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="n">password</span><span class="o">=</span><span class="s2">&#34;dbz&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="n">database</span><span class="o">=</span><span class="s2">&#34;gameodds&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">)</span>
+</span></span></code></pre></div><p>Note that two variables are used: KAFKA_CONNECT_IP and MYSQL_IP, both internal IPs of the containers. To get them, we can inspect manually using <code>docker network inspect websockets_default</code> or with this:</p>
+<pre tabindex="0"><code>docker inspect --format=&#39;{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}&#39; $(docker ps -aq --filter &#34;name=mysql&#34;)
+
+docker inspect --format=&#39;{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}&#39; $(docker ps -aq --filter &#34;name=kafka-connect&#34;)
+</code></pre><p>The /games route creates a new table using pure SQL based on the {game_id} from the request. Then, it calls the kafka-connect API creating a new connector with
+this table.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="nd">@app.post</span><span class="p">(</span><span class="s2">&#34;/games/</span><span class="si">{game_id}</span><span class="s2">&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">create_game</span><span class="p">(</span><span class="n">game_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="n">mycursor</span> <span class="o">=</span> <span class="n">mydb</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">sql</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;&#39;&#39;
+</span></span></span><span class="line"><span class="cl"><span class="s1">        CREATE TABLE IF NOT EXISTS game_</span><span class="si">{</span><span class="n">game_id</span><span class="si">}</span><span class="s1"> (
+</span></span></span><span class="line"><span class="cl"><span class="s1">            row_id INT AUTO_INCREMENT PRIMARY KEY,
+</span></span></span><span class="line"><span class="cl"><span class="s1">            game_id VARCHAR(50) NOT NULL,
+</span></span></span><span class="line"><span class="cl"><span class="s1">            odd1 VARCHAR(50),
+</span></span></span><span class="line"><span class="cl"><span class="s1">            odd2 VARCHAR(50),
+</span></span></span><span class="line"><span class="cl"><span class="s1">            odd3 VARCHAR(50),
+</span></span></span><span class="line"><span class="cl"><span class="s1">            odd4 VARCHAR(50),
+</span></span></span><span class="line"><span class="cl"><span class="s1">            odd5 VARCHAR(50),
+</span></span></span><span class="line"><span class="cl"><span class="s1">            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+</span></span></span><span class="line"><span class="cl"><span class="s1">    );   
+</span></span></span><span class="line"><span class="cl"><span class="s1">    &#39;&#39;&#39;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">mycursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">mydb</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">mycursor</span> <span class="o">=</span> <span class="n">mydb</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">sql</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;&#39;&#39;INSERT INTO available_games (game_id, game_id_name, connector_name) 
+</span></span></span><span class="line"><span class="cl"><span class="s1">        SELECT &#39;</span><span class="si">{</span><span class="n">game_id</span><span class="si">}</span><span class="s1">&#39;, &#39;</span><span class="si">{</span><span class="s2">&#34;game_&#34;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">game_id</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;, 
+</span></span></span><span class="line"><span class="cl"><span class="s1">        &#39;</span><span class="si">{</span><span class="s2">&#34;mysql-debezium-json-no-schema-asgard.gameodds.game_&#34;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">game_id</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39; 
+</span></span></span><span class="line"><span class="cl"><span class="s1">        FROM DUAL WHERE NOT EXISTS ( SELECT 1 FROM available_games WHERE game_id = &#39;</span><span class="si">{</span><span class="n">game_id</span><span class="si">}</span><span class="s1">&#39; ); 
+</span></span></span><span class="line"><span class="cl"><span class="s1">        &#39;&#39;&#39;</span>
+</span></span><span class="line"><span class="cl">    <span class="nb">print</span><span class="p">(</span><span class="n">sql</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">mycursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">mydb</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">create_connector</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;http://</span><span class="si">{</span><span class="n">KAFKA_CONNECT_IP</span><span class="si">}</span><span class="s2">:8083/connectors/&#34;</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">&#34;Accept&#34;</span><span class="p">:</span> <span class="s2">&#34;application/json&#34;</span><span class="p">,</span> <span class="s2">&#34;Content-Type&#34;</span><span class="p">:</span><span class="s2">&#34;application/json&#34;</span><span class="p">},</span> <span class="n">json</span><span class="o">=</span><span class="p">{</span>
+</span></span><span class="line"><span class="cl">      <span class="s2">&#34;name&#34;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&#34;source-debezium-orders-</span><span class="si">{</span><span class="n">game_id</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">      <span class="s2">&#34;config&#34;</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">&#34;connector.class&#34;</span><span class="p">:</span> <span class="s2">&#34;io.debezium.connector.mysql.MySqlConnector&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">&#34;database.hostname&#34;</span><span class="p">:</span> <span class="s2">&#34;mysql&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">&#34;database.port&#34;</span><span class="p">:</span> <span class="s2">&#34;3306&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">&#34;database.user&#34;</span><span class="p">:</span> <span class="s2">&#34;debezium&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">&#34;database.password&#34;</span><span class="p">:</span> <span class="s2">&#34;dbz&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">&#34;database.server.id&#34;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&#34;</span><span class="si">{</span><span class="n">game_id</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">&#34;database.server.name&#34;</span><span class="p">:</span> <span class="s2">&#34;asgard&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">&#34;table.whitelist&#34;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&#34;gameodds.game_</span><span class="si">{</span><span class="n">game_id</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">&#34;database.history.kafka.bootstrap.servers&#34;</span><span class="p">:</span> <span class="s2">&#34;kafka:29092&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">&#34;database.history.kafka.topic&#34;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&#34;dbserver_</span><span class="si">{</span><span class="n">game_id</span><span class="si">}</span><span class="s2">&#34;</span> <span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">&#34;decimal.handling.mode&#34;</span><span class="p">:</span> <span class="s2">&#34;double&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">&#34;include.schema.changes&#34;</span><span class="p">:</span> <span class="s2">&#34;true&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">&#34;value.converter&#34;</span><span class="p">:</span> <span class="s2">&#34;org.apache.kafka.connect.json.JsonConverter&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">&#34;value.converter.schemas.enable&#34;</span><span class="p">:</span> <span class="s2">&#34;false&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">&#34;key.converter&#34;</span><span class="p">:</span> <span class="s2">&#34;org.apache.kafka.connect.json.JsonConverter&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">&#34;key.converter.schemas.enable&#34;</span><span class="p">:</span> <span class="s2">&#34;false&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">&#34;transforms&#34;</span><span class="p">:</span> <span class="s2">&#34;unwrap,addTopicPrefix&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">&#34;transforms.unwrap.type&#34;</span><span class="p">:</span> <span class="s2">&#34;io.debezium.transforms.ExtractNewRecordState&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">&#34;transforms.addTopicPrefix.type&#34;</span><span class="p">:</span><span class="s2">&#34;org.apache.kafka.connect.transforms.RegexRouter&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">&#34;transforms.addTopicPrefix.regex&#34;</span><span class="p">:</span><span class="s2">&#34;(.*)&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">&#34;transforms.addTopicPrefix.replacement&#34;</span><span class="p">:</span><span class="s2">&#34;mysql-debezium-json-no-schema-$1&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">&#34;database.allowPublicKeyRetrieval&#34;</span><span class="p">:</span> <span class="s2">&#34;true&#34;</span>
+</span></span><span class="line"><span class="cl">       <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="p">})</span>
+</span></span></code></pre></div><p>The /sendodd route just creates the odds randomly and insert it into the table.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="nd">@app.post</span><span class="p">(</span><span class="s2">&#34;/sendodd/</span><span class="si">{game_id}</span><span class="s2">&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">read_root</span><span class="p">(</span><span class="n">game_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="n">mycursor</span> <span class="o">=</span> <span class="n">mydb</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">odd1</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">*</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">odd2</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">*</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">odd3</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">*</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">odd4</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">*</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">odd5</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">*</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">sql</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;INSERT INTO game_</span><span class="si">{</span><span class="n">game_id</span><span class="si">}</span><span class="s1"> (game_id, odd1, odd2, odd3, odd4, odd5) VALUES (</span><span class="si">{</span><span class="n">game_id</span><span class="si">}</span><span class="s1">, </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">odd1</span><span class="p">)</span><span class="si">}</span><span class="s1">, </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">odd2</span><span class="p">)</span><span class="si">}</span><span class="s1">, </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">odd3</span><span class="p">)</span><span class="si">}</span><span class="s1">, </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">odd4</span><span class="p">)</span><span class="si">}</span><span class="s1">, </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">odd5</span><span class="p">)</span><span class="si">}</span><span class="s1">)&#39;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">mycursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">mydb</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nb">print</span><span class="p">(</span><span class="n">mycursor</span><span class="o">.</span><span class="n">rowcount</span><span class="p">,</span> <span class="s2">&#34;record inserted.&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="p">{</span><span class="s2">&#34;game_id&#34;</span><span class="p">:</span> <span class="n">game_id</span><span class="p">,</span> <span class="s2">&#34;odd1&#34;</span><span class="p">:</span> <span class="n">odd1</span><span class="p">,</span> <span class="s2">&#34;odd2&#34;</span><span class="p">:</span> <span class="n">odd2</span><span class="p">,</span> <span class="s2">&#34;odd3&#34;</span><span class="p">:</span> <span class="n">odd3</span><span class="p">,</span> <span class="s2">&#34;odd4&#34;</span><span class="p">:</span> <span class="n">odd4</span><span class="p">,</span> <span class="s2">&#34;odd5&#34;</span> <span class="p">:</span> <span class="n">odd5</span><span class="p">}</span>
+</span></span></code></pre></div><p>Containerazing it with Docker (check the Dockerfile in the repository) and building the project (note we are using the &ldquo;net&rdquo; argument so it can access the database ):</p>
+<pre tabindex="0"><code>docker build -t fastapi-image . &amp;&amp; docker run -d --name fastapi-container -p 80:80 --net websockets_default fastapi-image
+</code></pre><p>So to create a game with the id = 123122:</p>
+<pre tabindex="0"><code>curl -X POST &#34;localhost:80/games/123122&#34;
+</code></pre><p>Send some odds in that game to the database:</p>
+<pre tabindex="0"><code>curl -X POST &#34;localhost:80/sendodd/123122&#34;
+</code></pre><h2 id="js-websocket-server">JS Websocket server</h2>
+<p>The first thing we&rsquo;ll need is the websocket server, which will receive the messages from the Kafka topic and send them
+to all the websocket clients. The version of the package used is <a href="mailto:ws@8.18.0">ws@8.18.0</a>. The following code uses Javascript to create a websocket server
+and the consumer to the Kafka topics.</p>
+<p>Let&rsquo;s load the libraries needed and start the connection with the database,  start the connection with Kafka and start the Websocket server:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-javascript" data-lang="javascript"><span class="line"><span class="cl"><span class="kr">const</span> <span class="nx">WebSocket</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s2">&#34;ws&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="kd">var</span> <span class="nx">mysql</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s2">&#34;mysql2&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="kr">const</span> <span class="p">{</span> <span class="nx">Kafka</span> <span class="p">}</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s2">&#34;kafkajs&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kr">const</span> <span class="nx">MYSQL_IP</span> <span class="o">=</span> <span class="s2">&#34;172.18.0.2&#34;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="kr">const</span> <span class="nx">KAFKA_IP</span> <span class="o">=</span> <span class="s2">&#34;172.18.0.5&#34;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">let</span> <span class="nx">connection_names</span> <span class="o">=</span> <span class="p">[];</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">var</span> <span class="nx">con</span> <span class="o">=</span> <span class="nx">mysql</span><span class="p">.</span><span class="nx">createConnection</span><span class="p">({</span>
+</span></span><span class="line"><span class="cl">  <span class="nx">host</span><span class="o">:</span> <span class="nx">MYSQL_IP</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">  <span class="nx">port</span><span class="o">:</span> <span class="s2">&#34;3306&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">  <span class="nx">user</span><span class="o">:</span> <span class="s2">&#34;debezium&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">  <span class="nx">password</span><span class="o">:</span> <span class="s2">&#34;dbz&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">  <span class="nx">database</span><span class="o">:</span> <span class="s2">&#34;gameodds&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl"><span class="p">});</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kr">const</span> <span class="nx">wss</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">WebSocket</span><span class="p">.</span><span class="nx">Server</span><span class="p">({</span> <span class="nx">port</span><span class="o">:</span> <span class="mi">81</span> <span class="p">});</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&#34;Server running&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kr">const</span> <span class="nx">kafka</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Kafka</span><span class="p">({</span>
+</span></span><span class="line"><span class="cl">  <span class="nx">brokers</span><span class="o">:</span> <span class="p">[</span><span class="sb">`</span><span class="si">${</span><span class="nx">KAFKA_IP</span><span class="si">}</span><span class="sb">:29092`</span><span class="p">],</span>
+</span></span><span class="line"><span class="cl"><span class="p">});</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kr">const</span> <span class="nx">consumer</span> <span class="o">=</span> <span class="nx">kafka</span><span class="p">.</span><span class="nx">consumer</span><span class="p">({</span> <span class="nx">groupId</span><span class="o">:</span> <span class="s2">&#34;group-1&#34;</span> <span class="p">});</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nx">con</span><span class="p">.</span><span class="nx">connect</span><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="k">if</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="k">throw</span> <span class="nx">err</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="nx">con</span><span class="p">.</span><span class="nx">query</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;SELECT connector_name FROM available_games&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">result</span><span class="p">,</span> <span class="nx">fields</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">      <span class="k">if</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="k">throw</span> <span class="nx">err</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">      <span class="kd">var</span> <span class="nx">values</span> <span class="o">=</span> <span class="nx">result</span><span class="p">.</span><span class="nx">map</span><span class="p">((</span><span class="nx">item</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="nx">item</span><span class="p">.</span><span class="nx">connector_name</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">      <span class="nx">connection_names</span> <span class="o">=</span> <span class="nx">values</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">      <span class="nx">run</span><span class="p">(</span><span class="nx">connection_names</span><span class="p">).</span><span class="k">catch</span><span class="p">(</span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">  <span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">});</span>
+</span></span></code></pre></div><p>Every time the server starts, it queries the database looking for available games. They are stored in a list
+called &ldquo;connection_names&rdquo; and the server will consume the Kafka topic related to that game. Every time
+it receives a new payload from any of the games, it stores in a variable call last_odds. Them, every 5 seconds, it sends it to all the clients connected.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-javascript" data-lang="javascript"><span class="line"><span class="cl"><span class="kd">var</span> <span class="nx">last_odds</span> <span class="o">=</span> <span class="p">{};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kr">const</span> <span class="nx">run</span> <span class="o">=</span> <span class="kr">async</span> <span class="p">(</span><span class="nx">connection_names</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="kr">await</span> <span class="nx">consumer</span><span class="p">.</span><span class="nx">connect</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  <span class="kr">await</span> <span class="nx">connection_names</span><span class="p">.</span><span class="nx">forEach</span><span class="p">((</span><span class="nx">item</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`connecting: </span><span class="si">${</span><span class="nx">item</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">consumer</span><span class="p">.</span><span class="nx">subscribe</span><span class="p">({</span>
+</span></span><span class="line"><span class="cl">      <span class="nx">topics</span><span class="o">:</span> <span class="p">[</span><span class="nx">item</span><span class="p">],</span>
+</span></span><span class="line"><span class="cl">      <span class="nx">fromBeginning</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="p">});</span>
+</span></span><span class="line"><span class="cl">  <span class="p">});</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  <span class="kr">await</span> <span class="nx">consumer</span><span class="p">.</span><span class="nx">run</span><span class="p">({</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">eachMessage</span><span class="o">:</span> <span class="kr">async</span> <span class="p">({</span> <span class="nx">topic</span><span class="p">,</span> <span class="nx">partition</span><span class="p">,</span> <span class="nx">message</span> <span class="p">})</span> <span class="p">=&gt;</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">      <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">({</span>
+</span></span><span class="line"><span class="cl">        <span class="nx">value</span><span class="o">:</span> <span class="nx">message</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">toString</span><span class="p">(),</span>
+</span></span><span class="line"><span class="cl">        <span class="nx">topic</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="nx">partition</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">      <span class="p">});</span>
+</span></span><span class="line"><span class="cl">      <span class="nx">last_odds</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">message</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">toString</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl">    <span class="p">},</span>
+</span></span><span class="line"><span class="cl">  <span class="p">});</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nx">wss</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s2">&#34;connection&#34;</span><span class="p">,</span> <span class="p">(</span><span class="nx">ws</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&#34;Client connected&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&#34;Received a new connection&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  <span class="nx">ws</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s2">&#34;close&#34;</span><span class="p">,</span> <span class="p">()</span> <span class="p">=&gt;</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&#34;Client disconnected&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="p">});</span>
+</span></span><span class="line"><span class="cl"><span class="p">});</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">function</span> <span class="nx">update</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">last_odds</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">connection_names</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  <span class="nx">wss</span><span class="p">.</span><span class="nx">clients</span><span class="p">.</span><span class="nx">forEach</span><span class="p">((</span><span class="nx">client</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="nx">client</span><span class="p">.</span><span class="nx">readyState</span> <span class="o">===</span> <span class="nx">WebSocket</span><span class="p">.</span><span class="nx">OPEN</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">      <span class="nx">client</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">last_odds</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">  <span class="p">});</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kr">const</span> <span class="nx">intervalId</span> <span class="o">=</span> <span class="nx">setInterval</span><span class="p">(</span><span class="nx">update</span><span class="p">,</span> <span class="mi">5000</span><span class="p">);</span>
+</span></span></code></pre></div><p>OBS: In the utils/ folder of the project there&rsquo;s a js file with a test. It will just open a connection, send a websocket message to the server
+and then close it. It&rsquo;s just for testing pourposes but it can be useful if something isn&rsquo;t working.</p>
+<h2 id="js-websocket-client">JS Websocket client</h2>
+<p>For the client, we&rsquo;ll use React to build a simple UI. The version of the packages used are <a href="mailto:create-react-app@5.0.1">create-react-app@5.0.1</a>, <a href="mailto:web-vitals@4.2.4">web-vitals@4.2.4</a> and <a href="mailto:ws@8.18.0">ws@8.18.0</a>.
+It uses a list of games indexed by the game_id and shows them. If it receives a message with the same game_id of one of the messages stored in the list,
+it updates the values of the odds. If the game_id is not among them, just appends it to the list. The code also connects itself to the websocket server we&rsquo;ve build
+earlier.
+Creating the app with create-react-app, the App.js will be:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-javascript" data-lang="javascript"><span class="line"><span class="cl"><span class="kr">import</span> <span class="s2">&#34;./App.css&#34;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kr">import</span> <span class="nx">React</span><span class="p">,</span> <span class="p">{</span> <span class="nx">useEffect</span><span class="p">,</span> <span class="nx">useState</span> <span class="p">}</span> <span class="nx">from</span> <span class="s2">&#34;react&#34;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kr">const</span> <span class="nx">WEBSOCKETSERVER_IP</span> <span class="o">=</span> <span class="s2">&#34;127.0.0.1&#34;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="kr">const</span> <span class="nx">socket</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">WebSocket</span><span class="p">(</span><span class="sb">`ws://</span><span class="si">${</span><span class="nx">WEBSOCKETSERVER_IP</span><span class="si">}</span><span class="sb">:81`</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kr">const</span> <span class="nx">OutputComponent</span> <span class="o">=</span> <span class="p">({</span> <span class="nx">messages</span> <span class="p">})</span> <span class="p">=&gt;</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="k">return</span> <span class="p">(</span>
+</span></span><span class="line"><span class="cl">    <span class="o">&lt;</span><span class="nx">div</span> <span class="nx">id</span><span class="o">=</span><span class="s2">&#34;output&#34;</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl">      <span class="p">{</span><span class="nx">messages</span><span class="p">.</span><span class="nx">map</span><span class="p">((</span><span class="nx">game</span><span class="p">,</span> <span class="nx">index</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">(</span>
+</span></span><span class="line"><span class="cl">        <span class="o">&lt;</span><span class="nx">div</span> <span class="nx">key</span><span class="o">=</span><span class="p">{</span><span class="nx">index</span><span class="p">}</span> <span class="nx">className</span><span class="o">=</span><span class="s2">&#34;container&#34;</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl">          <span class="o">&lt;</span><span class="nx">ul</span> <span class="nx">className</span><span class="o">=</span><span class="s2">&#34;list&#34;</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl">            <span class="o">&lt;</span><span class="nx">li</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl">              <span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span><span class="nx">Game</span> <span class="nx">ID</span><span class="o">:</span> <span class="p">{</span><span class="nx">game</span><span class="p">.</span><span class="nx">game_id</span><span class="p">}</span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+</span></span><span class="line"><span class="cl">              <span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span><span class="nx">Odd</span> <span class="mi">1</span><span class="o">:</span> <span class="p">{</span><span class="nx">game</span><span class="p">.</span><span class="nx">odd1</span><span class="p">}</span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+</span></span><span class="line"><span class="cl">              <span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span><span class="nx">Odd</span> <span class="mi">2</span><span class="o">:</span> <span class="p">{</span><span class="nx">game</span><span class="p">.</span><span class="nx">odd2</span><span class="p">}</span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+</span></span><span class="line"><span class="cl">              <span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span><span class="nx">Odd</span> <span class="mi">3</span><span class="o">:</span> <span class="p">{</span><span class="nx">game</span><span class="p">.</span><span class="nx">odd3</span><span class="p">}</span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+</span></span><span class="line"><span class="cl">              <span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span><span class="nx">Odd</span> <span class="mi">4</span><span class="o">:</span> <span class="p">{</span><span class="nx">game</span><span class="p">.</span><span class="nx">odd4</span><span class="p">}</span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+</span></span><span class="line"><span class="cl">              <span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span><span class="nx">Odd</span> <span class="mi">5</span><span class="o">:</span> <span class="p">{</span><span class="nx">game</span><span class="p">.</span><span class="nx">odd5</span><span class="p">}</span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+</span></span><span class="line"><span class="cl">            <span class="o">&lt;</span><span class="err">/li&gt;</span>
+</span></span><span class="line"><span class="cl">          <span class="o">&lt;</span><span class="err">/ul&gt;</span>
+</span></span><span class="line"><span class="cl">        <span class="o">&lt;</span><span class="err">/div&gt;</span>
+</span></span><span class="line"><span class="cl">      <span class="p">))}</span>
+</span></span><span class="line"><span class="cl">    <span class="o">&lt;</span><span class="err">/div&gt;</span>
+</span></span><span class="line"><span class="cl">  <span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">function</span> <span class="nx">App</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="kr">const</span> <span class="p">[</span><span class="nx">messages</span><span class="p">,</span> <span class="nx">setMessages</span><span class="p">]</span> <span class="o">=</span> <span class="nx">useState</span><span class="p">([]);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  <span class="nx">useEffect</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">socket</span><span class="p">.</span><span class="nx">onopen</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">event</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">      <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&#34;You are Connected to WebSocket Server&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">};</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">socket</span><span class="p">.</span><span class="nx">onmessage</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">event</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">      <span class="kr">const</span> <span class="nx">payload</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">data</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">      <span class="nx">setMessages</span><span class="p">((</span><span class="nx">prevMessages</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="kr">const</span> <span class="nx">existingIndex</span> <span class="o">=</span> <span class="nx">prevMessages</span><span class="p">.</span><span class="nx">findIndex</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">          <span class="p">(</span><span class="nx">msg</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="nx">msg</span><span class="p">.</span><span class="nx">game_id</span> <span class="o">===</span> <span class="nx">payload</span><span class="p">.</span><span class="nx">game_id</span>
+</span></span><span class="line"><span class="cl">        <span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="nx">existingIndex</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">          <span class="kr">const</span> <span class="nx">updatedMessages</span> <span class="o">=</span> <span class="p">[...</span><span class="nx">prevMessages</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">          <span class="nx">updatedMessages</span><span class="p">[</span><span class="nx">existingIndex</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="p">...</span><span class="nx">updatedMessages</span><span class="p">[</span><span class="nx">existingIndex</span><span class="p">],</span>
+</span></span><span class="line"><span class="cl">            <span class="p">...</span><span class="nx">payload</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">          <span class="p">};</span>
+</span></span><span class="line"><span class="cl">          <span class="k">return</span> <span class="nx">updatedMessages</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">          <span class="k">return</span> <span class="p">[...</span><span class="nx">prevMessages</span><span class="p">,</span> <span class="nx">payload</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">      <span class="p">});</span>
+</span></span><span class="line"><span class="cl">    <span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nx">socket</span><span class="p">.</span><span class="nx">onclose</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">event</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">      <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&#34;Disconnected from WebSocket server&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">};</span>
+</span></span><span class="line"><span class="cl">  <span class="p">});</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  <span class="k">return</span> <span class="p">(</span>
+</span></span><span class="line"><span class="cl">    <span class="o">&lt;</span><span class="nx">div</span> <span class="nx">className</span><span class="o">=</span><span class="s2">&#34;App&#34;</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl">      <span class="o">&lt;</span><span class="nx">header</span> <span class="nx">className</span><span class="o">=</span><span class="s2">&#34;App-header&#34;</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl">        <span class="o">&lt;</span><span class="nx">h1</span><span class="o">&gt;</span><span class="nx">Odds</span> <span class="nx">Market</span> <span class="nx">Simulator</span><span class="o">&lt;</span><span class="err">/h1&gt;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="o">&lt;</span><span class="nx">OutputComponent</span> <span class="nx">messages</span><span class="o">=</span><span class="p">{</span><span class="nx">messages</span><span class="p">}</span> <span class="o">/&gt;</span>
+</span></span><span class="line"><span class="cl">      <span class="o">&lt;</span><span class="err">/header&gt;</span>
+</span></span><span class="line"><span class="cl">    <span class="o">&lt;</span><span class="err">/div&gt;</span>
+</span></span><span class="line"><span class="cl">  <span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kr">export</span> <span class="k">default</span> <span class="nx">App</span><span class="p">;</span>
+</span></span></code></pre></div><p>The Dockerfile for the WebSocket client uses nginx to serve the built app. The final app looks something like this:</p>
+<p><img src="/posts/websockets-kafka/final.png" alt=""></p>
+<h2 id="testing">Testing</h2>
+<p>If everything is ok, by starting the docker-compose, the API, the websocker server and the client, we can now call the API to create a new game:</p>
+<pre tabindex="0"><code>curl -X POST &#34;localhost:80/games/123121&#34;
+</code></pre><p>Now lets create some odds:</p>
+<pre tabindex="0"><code>curl -X POST &#34;localhost:80/sendodd/123121&#34;
+</code></pre><p>It returns the following payload:</p>
+<pre tabindex="0"><code>{
+    &#34;game_id&#34;: &#34;123121&#34;,
+    &#34;odd1&#34;: 0.32,
+    &#34;odd2&#34;: 2.28,
+    &#34;odd3&#34;: 3.14,
+    &#34;odd4&#34;: 0.99,
+    &#34;odd5&#34;: 0.17
+}
+</code></pre><p>We should see the odds updated in the browser:</p>
+<p><img src="/posts/websockets-kafka/odd1.png" alt=""></p>
+<p>By calling it again, the odds should change:</p>
+<pre tabindex="0"><code>curl -X POST &#34;localhost:80/sendodd/123121&#34;
+</code></pre><p>It returns the following payload:</p>
+<pre tabindex="0"><code>{
+    &#34;game_id&#34;: &#34;123121&#34;,
+    &#34;odd1&#34;: 3.54,
+    &#34;odd2&#34;: 1.07,
+    &#34;odd3&#34;: 2.12,
+    &#34;odd4&#34;: 4.42,
+    &#34;odd5&#34;: 3.36
+}
+</code></pre><p>and updates in the browser:</p>
+<p><img src="/posts/websockets-kafka/odd2.png" alt=""></p>
+<p>Let&rsquo;s create another game now.</p>
+<pre tabindex="0"><code>curl -X POST &#34;localhost:80/games/123120&#34;
+</code></pre><p>By calling the endpoint, the new game should apper in the browser.</p>
+<p><img src="/posts/websockets-kafka/odd3.png" alt=""></p>
+<p>That&rsquo;s it. You can check the full source code in the <a href="https://github.com/vinybrasil/websocket-kafka">repository</a> and feel free to
+contact me if there are some errors. Still there&rsquo;s a lot to be done and in the repository listed some thing in the todo list. Keep on learning :D</p>
+<p><img src="/posts/websockets-kafka/header.png" alt=""></p>
+
+            </div>
+        </article></main>
+</div>
+<footer class="footer">
+    <span class="footer_item"> </span>
+    &nbsp;
+
+    <div class="footer_social-icons">
+<a href="https://github.com/vinybrasil" target="_blank" rel="noopener noreferrer me"
+    title="Github">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path
+        d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+    </path>
+</svg>
+</a>
+<a href="https://twitter.com" target="_blank" rel="noopener noreferrer me"
+    title="Twitter">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path
+        d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z">
+    </path>
+</svg>
+</a>
+<a href="/index.xml" target="_blank" rel="noopener noreferrer me"
+    title="Rss">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 11a9 9 0 0 1 9 9" />
+    <path d="M4 4a16 16 0 0 1 16 16" />
+    <circle cx="5" cy="19" r="1" />
+</svg>
+</a>
+</div>
+    <small class="footer_copyright">
+        © 2025 Vinicyus Brasil.
+        Powered by <a href="https://github.com/hugo-sid/hugo-blog-awesome" target="_blank" rel="noopener">Hugo blog awesome</a>.
+    </small>
+</footer><a href="#" title="Go to top" id="totop">
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" stroke="currentColor" viewBox="0 96 960 960">
+    <path d="M283 704.739 234.261 656 480 410.261 725.739 656 677 704.739l-197-197-197 197Z"/>
+</svg>
+
+</a>
+
+
+    
+
+
+
+
+
+
+    
+    <script src="https://vinybrasil.github.io/js/main.min.35f435a5d8eac613c52daa28d8af544a4512337d3e95236e4a4978417b8dcb2f.js" integrity="sha256-NfQ1pdjqxhPFLaoo2K9USkUSM30&#43;lSNuSkl4QXuNyy8="></script>
+
+    
+
+</body>
+</html>
