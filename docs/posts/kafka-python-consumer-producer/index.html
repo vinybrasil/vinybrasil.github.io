@@ -173,8 +173,29 @@ stroke-linejoin="round" class="feather feather-home">
                 </li>
                 
                 <li>
+                    <a class="menu-link " href="/videos/">
+                        Videos
+                    </a>
+                    
+                </li>
+                
+                <li>
                     <a class="menu-link " href="/pages/about/">
-                        About
+                        Research
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="https://www.linkedin.com/in/vinicyus-brasil/?locale=en_US">
+                        Linkedin
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="https://github.com/vinybrasil">
+                        Github
                     </a>
                     
                 </li>
@@ -334,9 +355,9 @@ We can now create a topic:</p>
 </span></span></code></pre></div><p>We can also test it using cURL:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">curl -X POST -d <span class="o">{</span><span class="se">\&#34;</span>name<span class="se">\&#34;</span>:<span class="se">\&#34;</span>salve<span class="se">\&#34;</span><span class="o">}</span> -H <span class="s2">&#34;Content-Type: application/json&#34;</span>  http://localhost:8000/producer/test1
 </span></span></code></pre></div><p>It should return something like this:</p>
-<p><a href="$image.asset%28%22kafkafastapiasyncfig1.png%22%29"></a></p>
+<p><img src="/posts/kafka-python-consumer-producer/kafkafastapiasyncfig1.png" alt=""></p>
 <p>In the server terminal, the results should look like:</p>
-<p><a href="$image.asset%28%22kafkafastapiasyncfig2.png%22%29"></a></p>
+<p><img src="/posts/kafka-python-consumer-producer/kafkafastapiasyncfig2.png" alt=""></p>
 <p>That&rsquo;s it. Feel free to ask any questions or to contribute in the github repository or in my personal email.</p>
 <h3 id="references">References</h3>
 <p>[1] Shuyi Yang. Apache Kafka: Docker Container and examples in Python. Available at <a href="https://towardsdatascience.com/kafka-docker-python-408baf0e1088">https://towardsdatascience.com/kafka-docker-python-408baf0e1088</a></p>

@@ -173,8 +173,29 @@ stroke-linejoin="round" class="feather feather-home">
                 </li>
                 
                 <li>
+                    <a class="menu-link " href="/videos/">
+                        Videos
+                    </a>
+                    
+                </li>
+                
+                <li>
                     <a class="menu-link " href="/pages/about/">
-                        About
+                        Research
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="https://www.linkedin.com/in/vinicyus-brasil/?locale=en_US">
+                        Linkedin
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="https://github.com/vinybrasil">
+                        Github
                     </a>
                     
                 </li>
@@ -364,7 +385,7 @@ The full sqs_handler.py will be</p>
 </span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">event_handler</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span>
 </span></span></code></pre></div><p>Everytime it receives a event, it will check if it&rsquo;s a HTTP request (which Mangum will handle) or if it&rsquo;s a SQS message (which our handler sqs_handler.py will handle).
 The  t will be</p>
-<p><a href="$image.asset%28%22img1.png%22%29"></a></p>
+<p><img src="/posts/sqs-lambda/img1.png" alt=""></p>
 <p>To handle our dependencies, we can use poetry</p>
 <pre tabindex="0"><code>poetry init
 poetry add fastapi uvicorn mangum pydantic
@@ -400,23 +421,23 @@ tool (like Terraform). I strongly
 recommend the use of Terraform, mainly because you can replicate the same infrastructure in many
 different enviroments.  For this tutorial we&rsquo;ll be using the management console, mainly because of the simplicity.</p>
 <p>A Lambda function can be created on the AWS Lambda page:</p>
-<p><a href="$image.asset%28%22lambda1.png%22%29"> </a></p>
+<p><img src="/posts/sqs-lambda/lambda1.png" alt=""></p>
 <p>Our Lambda will use the container created before:</p>
-<p><a href="$image.asset%28%22lambda2.png%22%29"> </a></p>
+<p><img src="/posts/sqs-lambda/lambda2.png" alt=""></p>
 <p>We need to give access to the SQS in the role of the Lambda. We can do this by adding:</p>
-<p><a href="$image.asset%28%22lambda3.png%22%29"> </a></p>
+<p><img src="/posts/sqs-lambda/lambda3.png" alt=""></p>
 <p>An alternative is to add full access to the SQS services on the role of the Lambda. By finding the role of the Lambda, we need to attach the following policy:</p>
-<p><a href="$image.asset%28%22lambda5.png%22%29"> </a></p>
+<p><img src="/posts/sqs-lambda/lambda5.png" alt=""></p>
 <p>Our final Lambda should look something like this:
-<a href="$image.asset%28%22lambda4.png%22%29"> </a></p>
+<img src="/posts/sqs-lambda/lambda4.png" alt=""></p>
 <h2 id="testing">Testing</h2>
 <p>To test it, we can test it using the Test tab on the same Lambda
 page we are working. First, we need to test receving a SQS message:</p>
-<p><a href="$image.asset%28%22lambda8.png%22%29"> </a></p>
+<p><img src="/posts/sqs-lambda/lambda8.png" alt=""></p>
 <p>Now a API call to the endpoint /records to get all the messages:
-<a href="$image.asset%28%22img6.png%22%29"> </a></p>
+<img src="/posts/sqs-lambda/img6.png" alt=""></p>
 <p>The response should be
-<a href="$image.asset%28%22lambda12.png%22%29"> </a></p>
+<img src="/posts/sqs-lambda/lambda12.png" alt=""></p>
 <p>That&rsquo;s it. Feel free to ask me any questions, explore the code on Github or contact me via LinkedIn. Keep on learning :D</p>
 
             </div>
