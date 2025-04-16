@@ -13,15 +13,22 @@
       
       <guid>http://localhost:1313/pages/about/</guid>
       
-      <description>&lt;ul&gt;
-&lt;li&gt;Work:&lt;/li&gt;
-&lt;/ul&gt;
+      <description>&lt;h1&gt;Work: &lt;/h1&gt; 
 &lt;p&gt;Machine Learning Engineer working for over four years in the industry using machine learning in scalable systems to add value and solve business problems.&lt;/p&gt;
 &lt;p&gt;I also have a Master&amp;rsquo;s degree in Numerical Methods from UFPR. I use Python and AWS/GCP as my main work tools&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;Research:&lt;/li&gt;
-&lt;/ul&gt;
+&lt;h1&gt;Research &lt;/h1&gt; 
 &lt;p&gt;Reinfocement learning: In my Master’s thesis I studied reinfocement learning, where I developed a new algorithm called QSVR. The algorithm uses a Support Vector Regression algorithm call Online-SVR to estimate the Q-function of a environment. The results show it can perform better than the Deep Q-Network and Q-learning in a environment with small state space and a discrete action space. The code of the project is in this repository.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>Videos</title>
+      <link>http://localhost:1313/pages/videos/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>http://localhost:1313/pages/videos/</guid>
+      
+      <description></description>
       
     </item>
     

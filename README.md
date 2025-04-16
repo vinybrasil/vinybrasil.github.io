@@ -1,4 +1,4 @@
-to build it:
+to build this website locally:
 
 ```
 hugo build -d docs/
@@ -7,5 +7,5 @@ hugo build -d docs/
 to run locally:
 
 ```
-hugo serve
+hugo serve -d docs/
 ```

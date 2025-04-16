@@ -94,11 +94,11 @@ theme = "hugo-blog-awesome"
     name = 'Research'
     url = '/about/'
     weight = 30
-  #[[Languages.en-us.menu.main]]
-    #pageRef="videos"
-    #name = 'Videos'
-    #url = '/videos/'
-    #weight = 25
+  [[Languages.en-us.menu.main]]
+    pageRef="videos"
+    name = 'Videos'
+    url = '/videos/'
+    weight = 25
   [[Languages.en-us.menu.main]]
     pageRef="https://www.linkedin.com/in/vinicyus-brasil/?locale=en_US"
     name = 'Linkedin'
