@@ -2,20 +2,20 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Pages on Viny Brasil&#39;s blog</title>
-    <link>http://localhost:1313/pages/</link>
+    <link>https://vinybrasil.github.io/pages/</link>
     <description>Recent content in Pages on Viny Brasil&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language><atom:link href="http://localhost:1313/pages/index.xml" rel="self" type="application/rss+xml" />
+    <language>en-us</language><atom:link href="https://vinybrasil.github.io/pages/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>About me</title>
-      <link>http://localhost:1313/pages/about/</link>
+      <link>https://vinybrasil.github.io/pages/about/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>http://localhost:1313/pages/about/</guid>
+      <guid>https://vinybrasil.github.io/pages/about/</guid>
       
-      <description>&lt;h1&gt;Work: &lt;/h1&gt; 
-&lt;p&gt;Machine Learning Engineer working for over four years in the industry using machine learning in scalable systems to add value and solve business problems.&lt;/p&gt;
-&lt;p&gt;I also have a Master&amp;rsquo;s degree in Numerical Methods from UFPR. I use Python and AWS/GCP as my main work tools&lt;/p&gt;
+      <description>&lt;h1&gt;Work &lt;/h1&gt; 
+&lt;p&gt;I&amp;rsquo;m a Machine Learning Engineer working for over four years in the industry using machine learning in scalable systems to add value and solve business problems.&lt;/p&gt;
+&lt;p&gt;I use Python and AWS/GCP as my main work tools.&lt;/p&gt;
 &lt;h1&gt;Research &lt;/h1&gt; 
 &lt;p&gt;Reinfocement learning: In my Master’s thesis I studied reinfocement learning, where I developed a new algorithm called QSVR. The algorithm uses a Support Vector Regression algorithm call Online-SVR to estimate the Q-function of a environment. The results show it can perform better than the Deep Q-Network and Q-learning in a environment with small state space and a discrete action space. The code of the project is in this repository.&lt;/p&gt;</description>
       
@@ -23,10 +23,10 @@
     
     <item>
       <title>My Youtube videos</title>
-      <link>http://localhost:1313/pages/videos/</link>
+      <link>https://vinybrasil.github.io/pages/videos/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>http://localhost:1313/pages/videos/</guid>
+      <guid>https://vinybrasil.github.io/pages/videos/</guid>
       
       <description>&lt;hr style=&#34;height:2px;border-width:0;color:gray;background-color:gray&#34;&gt; 
 &lt;h2&gt;Why you will lose money with sports betting (mathematically) [video in portuguese] &lt;/h2&gt; 
