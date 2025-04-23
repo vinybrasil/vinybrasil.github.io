@@ -15,9 +15,9 @@ theme = "hugo-blog-awesome"
 name = "github"
 url = "https://github.com/vinybrasil"
 
-[[params.socialIcons]]
-name = "twitter"
-url = "https://twitter.com"
+#[[params.socialIcons]]
+#name = "twitter"
+#url = "https://twitter.com"
 
 [[params.socialIcons]]
 name = "Rss"
