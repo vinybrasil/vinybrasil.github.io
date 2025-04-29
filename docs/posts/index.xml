@@ -17,7 +17,7 @@
       <description>&lt;h2 id=&#34;introduction&#34;&gt;Introduction&lt;/h2&gt;
 &lt;p&gt;As a interpreted language, Python is known for being slower than compiled languages when running almost all processes including numerical calculations. It&amp;rsquo;s a trade-off actually, since writing
 compiled languages is normally more complicated (having to deal with pointers, for example) than Python.&lt;/p&gt;
-&lt;p&gt;There&amp;rsquo;s a way of profiting from both of the good parts of the languages: using dynamically linked shared object libraries. Compiling a function used in the calculation from the compiled language code to a shared object and loading it in Python, where we&amp;rsquo;ll call the function with the parameters, is
+&lt;p&gt;There&amp;rsquo;s a way of profiting from both of the good sides: using dynamically linked shared object libraries. Compiling a function used in the calculation from the compiled language code to a shared object and loading it in Python (where we&amp;rsquo;ll call the function with the parameters) is
 normally faster than just pure Python.&lt;/p&gt;</description>
       
     </item>
