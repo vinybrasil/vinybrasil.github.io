@@ -2,17 +2,32 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Home on Viny Brasil&#39;s blog</title>
-    <link>https://vinybrasil.github.io/</link>
+    <link>http://localhost:1313/</link>
     <description>Recent content in Home on Viny Brasil&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Tue, 11 Mar 2025 00:00:00 +0000</lastBuildDate><atom:link href="https://vinybrasil.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Mon, 28 Apr 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Optimizing Python with Zig for numerical calculations</title>
+      <link>http://localhost:1313/posts/zig-python-runge-kutta/</link>
+      <pubDate>Mon, 28 Apr 2025 00:00:00 +0000</pubDate>
+      
+      <guid>http://localhost:1313/posts/zig-python-runge-kutta/</guid>
+      
+      <description>&lt;h2 id=&#34;introduction&#34;&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;As a interpreted language, Python is known for being slower than compiled languages when running almost all processes including numerical calculations. It&amp;rsquo;s a trade-off actually, since writing
+compiled languages is normally more complicated (having to deal with pointers, for example) than Python.&lt;/p&gt;
+&lt;p&gt;There&amp;rsquo;s a way of profiting from both of the good sides: using dynamically linked shared object libraries. Compiling a function used in the calculation from the compiled language code to a shared object and loading it in Python (where we&amp;rsquo;ll call the function with the parameters) is
+normally faster than just pure Python.&lt;/p&gt;</description>
+      
+    </item>
+    
     <item>
       <title>Caching API responses with Redis in Zig</title>
-      <link>https://vinybrasil.github.io/posts/cache-zig-redis/</link>
+      <link>http://localhost:1313/posts/cache-zig-redis/</link>
       <pubDate>Tue, 11 Mar 2025 00:00:00 +0000</pubDate>
       
-      <guid>https://vinybrasil.github.io/posts/cache-zig-redis/</guid>
+      <guid>http://localhost:1313/posts/cache-zig-redis/</guid>
       
       <description>&lt;h2 id=&#34;introduction&#34;&gt;Introduction&lt;/h2&gt;
 &lt;p&gt;When fetching a database, our server must perform a READ operation. Every transation has a cost of time and money (computational cost in the cloud). One way of reducing this cost it&amp;rsquo;s
@@ -24,10 +39,10 @@ webframework written in Zig.&lt;/p&gt;</description>
     
     <item>
       <title>Running sklearn models in Zig</title>
-      <link>https://vinybrasil.github.io/posts/zig-sklearn/</link>
+      <link>http://localhost:1313/posts/zig-sklearn/</link>
       <pubDate>Thu, 06 Feb 2025 00:00:00 +0000</pubDate>
       
-      <guid>https://vinybrasil.github.io/posts/zig-sklearn/</guid>
+      <guid>http://localhost:1313/posts/zig-sklearn/</guid>
       
       <description>&lt;h2 id=&#34;introduction&#34;&gt;Introduction&lt;/h2&gt;
 &lt;p&gt;Scikit-learn models became the industry standard for creating machine learning models.
@@ -38,10 +53,10 @@ To overcome this limitation, one solution is to use Python&amp;rsquo;s C library
     
     <item>
       <title>Building a real-time Websocket webapp with Kafka and Javascript</title>
-      <link>https://vinybrasil.github.io/posts/websockets-kafka/</link>
+      <link>http://localhost:1313/posts/websockets-kafka/</link>
       <pubDate>Mon, 06 Jan 2025 00:00:00 +0000</pubDate>
       
-      <guid>https://vinybrasil.github.io/posts/websockets-kafka/</guid>
+      <guid>http://localhost:1313/posts/websockets-kafka/</guid>
       
       <description>&lt;h2 id=&#34;introduction&#34;&gt;Introduction&lt;/h2&gt;
 &lt;p&gt;Suppose we have a API that generates a lot of information whom we must store in a database and show them to clients. This information updates every few seconds
@@ -54,10 +69,10 @@ and this sort of system is call a real-time app (in reality, it takes some secon
     
     <item>
       <title>Convert decimal odds to probabilities with Zig</title>
-      <link>https://vinybrasil.github.io/posts/zigodd/</link>
+      <link>http://localhost:1313/posts/zigodd/</link>
       <pubDate>Mon, 30 Dec 2024 00:00:00 +0000</pubDate>
       
-      <guid>https://vinybrasil.github.io/posts/zigodd/</guid>
+      <guid>http://localhost:1313/posts/zigodd/</guid>
       
       <description>&lt;p&gt;A Zig program for conversion and payout calculation&lt;/p&gt;
 &lt;h2 id=&#34;introduction&#34;&gt;Introduction&lt;/h2&gt;
@@ -72,10 +87,10 @@ implementation. If you only need the code you can go directly to my &lt;a href=&
     
     <item>
       <title>Trigger a AWS Lambda with a SQS message with Python</title>
-      <link>https://vinybrasil.github.io/posts/sqs-lambda/</link>
+      <link>http://localhost:1313/posts/sqs-lambda/</link>
       <pubDate>Sat, 03 Dec 2022 00:00:00 +0000</pubDate>
       
-      <guid>https://vinybrasil.github.io/posts/sqs-lambda/</guid>
+      <guid>http://localhost:1313/posts/sqs-lambda/</guid>
       
       <description>&lt;h2 id=&#34;introduction&#34;&gt;Introduction&lt;/h2&gt;
 &lt;p&gt;In the context of microservices, the communication of them must be fast and realiabe. This communication can be through messages and a tool for this communication can be SQS (Simple Queue Service), a messaging service by AWS.&lt;/p&gt;
@@ -85,10 +100,10 @@ implementation. If you only need the code you can go directly to my &lt;a href=&
     
     <item>
       <title>Deploying a classification model on AWS Lambda with Docker and FastAPI</title>
-      <link>https://vinybrasil.github.io/posts/classification-model/</link>
+      <link>http://localhost:1313/posts/classification-model/</link>
       <pubDate>Wed, 31 Aug 2022 00:00:00 +0000</pubDate>
       
-      <guid>https://vinybrasil.github.io/posts/classification-model/</guid>
+      <guid>http://localhost:1313/posts/classification-model/</guid>
       
       <description>&lt;p&gt;Does the user inserted the correct picture when the app requested? That&amp;rsquo;s a pretty common problem companies faces when creating a onboarding process of a app or a web service. For example, during the onboarding process of a bank the app can ask for a selfie and the user insert a picture of it&amp;rsquo;s ID. Since in those kind of processes there&amp;rsquo;s a huge amount of requests at the same time, a manual validation process can&amp;rsquo;t be used and a machine learning model can be a good alternative. TensorFlow and FastAPI can be used to create that solution.&lt;/p&gt;</description>
       
@@ -96,10 +111,10 @@ implementation. If you only need the code you can go directly to my &lt;a href=&
     
     <item>
       <title>An asynchronous Consumer and Producer API for Kafka with FastAPI in Python</title>
-      <link>https://vinybrasil.github.io/posts/kafka-python-consumer-producer/</link>
+      <link>http://localhost:1313/posts/kafka-python-consumer-producer/</link>
       <pubDate>Mon, 27 Jun 2022 00:00:00 +0000</pubDate>
       
-      <guid>https://vinybrasil.github.io/posts/kafka-python-consumer-producer/</guid>
+      <guid>http://localhost:1313/posts/kafka-python-consumer-producer/</guid>
       
       <description>&lt;p&gt;Writing asynchronous code it&amp;rsquo;s worth the effort when you&amp;rsquo;re dealing with a high load or multiple microservices that can take some time to answer your calls. The purpose of this article is to create an simple asynchronous API that works the same time as a Kafka&amp;rsquo;s producer and consumer. The full project it&amp;rsquo;s on my &lt;a href=&#34;https://github.com/vinybrasil/fastapi_kafka&#34;&gt;Github&lt;/a&gt;.&lt;/p&gt;
 &lt;h3 id=&#34;setting-up-kafka&#34;&gt;Setting up Kafka&lt;/h3&gt;
@@ -109,10 +124,10 @@ implementation. If you only need the code you can go directly to my &lt;a href=&
     
     <item>
       <title>About me</title>
-      <link>https://vinybrasil.github.io/pages/about/</link>
+      <link>http://localhost:1313/pages/about/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://vinybrasil.github.io/pages/about/</guid>
+      <guid>http://localhost:1313/pages/about/</guid>
       
       <description>&lt;h1&gt;Work &lt;/h1&gt; 
 &lt;p&gt;I&amp;rsquo;m a Machine Learning Engineer working for over four years in the industry using machine learning in scalable systems to add value and solve business problems.&lt;/p&gt;
@@ -124,10 +139,10 @@ implementation. If you only need the code you can go directly to my &lt;a href=&
     
     <item>
       <title>My Youtube videos</title>
-      <link>https://vinybrasil.github.io/pages/videos/</link>
+      <link>http://localhost:1313/pages/videos/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://vinybrasil.github.io/pages/videos/</guid>
+      <guid>http://localhost:1313/pages/videos/</guid>
       
       <description>&lt;hr style=&#34;height:2px;border-width:0;color:gray;background-color:gray&#34;&gt; 
 &lt;h2&gt;Why you will lose money with sports betting (mathematically) [video in portuguese] &lt;/h2&gt; 
