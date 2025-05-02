@@ -4,6 +4,7 @@ title: Optimizing Python with Zig for numerical calculations
 date: 2025-04-28
 description: Using dynamically linked shared object libraries to run a faster Fourth Order Runge-Kutta Method
 math: true
+cover: contents/en/posts/zig-python-runge-kutta/zig_python.png
 ---
 
 ## Introduction
