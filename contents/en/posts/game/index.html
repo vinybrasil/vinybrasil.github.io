@@ -1,0 +1,148 @@
+---
+title: Day trading Simulator
+description: Game built with Raylib and WASM
+author: Vinicyus Brasil
+toc: false
+date: 2025-05-15
+math: true
+---
+<style>
+    /* Remove default margins and padding */
+    body {
+        margin: 0;
+        padding: 0;
+        background-color: #000;
+    }
+
+    /* Main container that centers everything */
+    .game-centerer {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        width: 100%;
+    }
+
+    /* Container that holds the game with border */
+    .game-border {
+        border: 4px solid #333;
+        border-radius: 8px;
+        overflow: hidden;
+        /* Ensures border contains everything */
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Game canvas styling */
+    canvas.emscripten {
+        display: block;
+        /* Removes extra space around canvas */
+        background-color: #000;
+    }
+</style>
+<!-- <div class="center-rectangle"> -->
+
+<div class="game-wrapper">
+    <div class="game-container">
+
+
+        <html lang=EN-us>
+
+        <head>
+            <meta charset=utf-8>
+            <meta content="text/html; charset=utf-8" http-equiv=Content-Type>
+            <title>raylib web game</title>
+            <meta content="raylib web game" name=title>
+            <meta content="New raylib web videogame, developed using raylib videogames library" name=description>
+            <meta content="raylib, programming, examples, html5, C, C++, library, learn, games, videogames"
+                name=keywords>
+            <meta content="width=device-width" name=viewport>
+            <meta content=website property=og:type>
+            <meta content="raylib web game" property=og:title>
+            <meta content=image/png property=og:image:type>
+            <meta content=https://www.raylib.com/common/raylib_logo.png property=og:image>
+            <meta content="New raylib web videogame, developed using raylib videogames library" property=og:image:alt>
+            <meta content="raylib - example" property=og:site_name>
+            <meta content=https://www.raylib.com/games.html property=og:url>
+            <meta content="New raylib web videogame, developed using raylib videogames library" property=og:description>
+            <meta content=summary_large_image name=twitter:card>
+            <meta content=@raysan5 name=twitter:site>
+            <meta content="raylib web game" name=twitter:title>
+            <meta content=https://www.raylib.com/common/raylib_logo.png name=twitter:image>
+            <meta content="New raylib web videogame, developed using raylib videogames library" name=twitter:image:alt>
+            <meta content=https://www.raylib.com/games.html name=twitter:url>
+            <meta content="New raylib web videogame, developed using raylib videogames library"
+                name=twitter:description>
+            <link href=https://www.raylib.com/favicon.ico rel="shortcut icon">
+            <style>
+                body {
+                    margin: 0;
+                    overflow: hidden;
+                    background-color: #000
+                }
+
+                canvas.emscripten {
+                    border: 0 none;
+                    background-color: #000
+                }
+            </style>
+            <script src=https://cdn.jsdelivr.net/gh/eligrey/FileSaver.js/dist/FileSaver.min.js></script>
+            <script>function saveFileFromMEMFSToDisk(e, a) { var i, o = FS.readFile(e); i = new Blob([o.buffer], { type: "application/octet-binary" }), saveAs(i, a) }</script>
+        </head>
+
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y0TCWKTPYJ"></script>
+
+
+        <body><canvas class=emscripten id=canvas oncontextmenu=event.preventDefault() tabindex=-1></canvas>
+            <p id=output>
+                <script>var Module = { print: function () { var e = document.getElementById("output"); return e && (e.value = ""), function (n) { arguments.length > 1 && (n = Array.prototype.slice.call(arguments).join(" ")), console.log(n), e && (e.value += n + "\n", e.scrollTop = e.scrollHeight) } }(), canvas: document.getElementById("canvas") }</script>
+                <script src=index.js async></script>
+        </body>
+
+        </html>
+
+    </div>
+</div>
+
+
+</code></pre>
+<p id="Description">A simple game built with Raylib and WASM that simulates the intraday price of a stock.
+    The player can buy the asset (will gain if the price goes up) or sell it (will gain if the price goes down). </p>
+
+
+</code></pre>
+<h2 id="The math of day trading">The math of day trading</h2>
+<p> The prices of a stock in short periods of time are assumed to follow  a model called Geometric Brownian Motion and here will be describing the discrete version of the model. </p>
+<p>Given $S$ as the price of the stock at time $t$, the change of the price ($\Delta S$) is proportional
+    to the expected return rate of that stock ($\mu$) and to the volatility of the price the stock ($\sigma$). The variable $\epsilon$ represents a random shock and it follows standard normal distribution ($\epsilon \sim N(0, 1)$). For a
+    small time step ($\Delta t$), $\mu  \Delta t$ is the expected change in $ \frac{\Delta S}{S} $ and it's variance is $\sigma  \epsilon \sqrt{(\Delta t)}$. </p>
+<p> So, the price change ($\Delta S$) for a small time interval   $ \Delta t$ can be written mathematically  as </p>
+
+<p> $$ \Delta S = \mu S \Delta t + \sigma S \epsilon \sqrt{(\Delta t)}. $$ </p>
+
+<p>  For more details please consult Hull (2015) page 330 and 331. </p> 
+</code></pre>
+<h2 id="How this game was built">How this game was built</h2>
+
+<p> This game was built in C using a Raylib, a wonderful library for building simple games. The code was compiled to
+    WebAssembly using Emscripten,
+    a compiler focused in the Web. The full code along with the scripts to building the game are available <a
+        class="menu-link " href="https://github.com/vinybrasil/daytradingsimulator"> here.</a> </p>
+
+
+
+</code></pre>
+<h2 id="References">References</h2>
+
+<div class="trigger">
+    <ul class="trigger-container">
+
+        <li> EMSCRIPTEN. Emscripten: Compiling C/C++ to WebAssembly. Available at: https://emscripten.org/</li>
+
+        <li>HULL, John C. Options, futures and other derivatives. 9. ed. Harlow, England: Pearson, 2015. 869 p. </li>
+
+        <li>RAYLIB. raylib - a simple and easy-to-use library to enjoy videogames programming. Available at:
+            www.raylib.com. </li>
+
+    </ul>
+
+</div>

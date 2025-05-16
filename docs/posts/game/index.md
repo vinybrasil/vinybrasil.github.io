@@ -3,49 +3,93 @@
 <meta http-equiv="content-type" content="text/html">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title itemprop="name">404 Page not found | Viny Brasil&#39;s blog</title>
-<meta property="og:title" content="404 Page not found | Viny Brasil&#39;s blog" />
-<meta name="twitter:title" content="404 Page not found | Viny Brasil&#39;s blog" />
-<meta itemprop="name" content="404 Page not found | Viny Brasil&#39;s blog" />
-<meta name="application-name" content="404 Page not found | Viny Brasil&#39;s blog" />
+<title itemprop="name">Day trading simulator | Viny Brasil&#39;s blog</title>
+<meta property="og:title" content="Day trading simulator | Viny Brasil&#39;s blog" />
+<meta name="twitter:title" content="Day trading simulator | Viny Brasil&#39;s blog" />
+<meta itemprop="name" content="Day trading simulator | Viny Brasil&#39;s blog" />
+<meta name="application-name" content="Day trading simulator | Viny Brasil&#39;s blog" />
 <meta property="og:site_name" content="Viny Brasil&#39;s blog" />
 
-<meta name="description" content="Minimal Hugo blog theme with light and dark mode support">
-<meta itemprop="description" content="Minimal Hugo blog theme with light and dark mode support" />
-<meta property="og:description" content="Minimal Hugo blog theme with light and dark mode support" />
-<meta name="twitter:description" content="Minimal Hugo blog theme with light and dark mode support" />
+<meta name="description" content="Game built with Raylib and WASM">
+<meta itemprop="description" content="Game built with Raylib and WASM" />
+<meta property="og:description" content="Game built with Raylib and WASM" />
+<meta name="twitter:description" content="Game built with Raylib and WASM" />
 
 <meta property="og:locale" content="en-us" />
 <meta name="language" content="en-us" />
 
-  <link rel="alternate" hreflang="en-us" href="http://localhost:1313/404.html" title="English" />
+  <link rel="alternate" hreflang="en-us" href="http://localhost:1313/posts/game/" title="English" />
 
 
 
 
+
+    
+    
+    
+
+    <meta property="og:type" content="article" />
+    <meta property="og:article:published_time" content=0001-01-01T00:00:00Z />
+    <meta property="article:published_time" content=0001-01-01T00:00:00Z />
+    <meta property="og:url" content="http://localhost:1313/posts/game/" />
+
+    
+    <meta property="og:article:author" content="Vinicyus Brasil" />
+    <meta property="article:author" content="Vinicyus Brasil" />
+    <meta name="author" content="Vinicyus Brasil" />
+    
+    
+
+    
+
+    <script defer type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "Article",
+        "headline": "Day trading simulator",
+        "author": {
+        "@type": "Person",
+        "name": ""
+        },
+        "datePublished": "0001-01-01",
+        "description": "Game built with Raylib and WASM",
+        "wordCount":  3 ,
+        "mainEntityOfPage": "True",
+        "dateModified": "0001-01-01",
+        "image": {
+        "@type": "imageObject",
+        "url": ""
+        },
+        "publisher": {
+        "@type": "Organization",
+        "name": "Viny Brasil\u0027s blog"
+        }
+    }
+    </script>
 
 
 <meta name="generator" content="Hugo 0.147.3">
 
     
-    <meta property="og:url" content="http://localhost:1313/404.html">
+    <meta property="og:url" content="http://localhost:1313/posts/game/">
   <meta property="og:site_name" content="Viny Brasil&#39;s blog">
-  <meta property="og:title" content="404 Page not found">
-  <meta property="og:description" content="Minimal Hugo blog theme with light and dark mode support">
+  <meta property="og:title" content="Day trading simulator">
+  <meta property="og:description" content="Game built with Raylib and WASM">
   <meta property="og:locale" content="en_us">
-  <meta property="og:type" content="website">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
 
 
     
     
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="404 Page not found">
-  <meta name="twitter:description" content="Minimal Hugo blog theme with light and dark mode support">
+  <meta name="twitter:title" content="Day trading simulator">
+  <meta name="twitter:description" content="Game built with Raylib and WASM">
 
 
     
 
-    <link rel="canonical" href="http://localhost:1313/404.html">
+    <link rel="canonical" href="http://localhost:1313/posts/game/">
     <link href="/style.min.42e37435fa386b24c4c2ba533734722ef928d7f110c4e2a59f8b1aed70a21b34.css" rel="stylesheet">
     <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
 
@@ -105,7 +149,7 @@ stroke-linejoin="round" class="feather feather-home">
                 </li>
                 
                 <li>
-                    <a class="menu-link " href="/posts/">
+                    <a class="menu-link active" href="/posts/">
                         Posts
                     </a>
                     
@@ -155,11 +199,111 @@ stroke-linejoin="round" class="feather feather-home">
     </nav>
 </div>
 
-<div class="wrapper">
-    <main class="main-404" aria-label="Content">
-        <h1>404 NOT FOUND</h1>
-        <p>You just hit a route that doesn&#39;t exist.</p>
-    </main>
+<div class="wrapper post">
+    <main class="page-content" aria-label="Content">
+        <article>
+            <header class="header">
+                <h1 class="header-title">Day trading simulator</h1>
+                
+                
+            </header>
+            
+            <div class="page-content">
+                
+
+<style>
+    /* Remove default margins and padding */
+    body {
+        margin: 0;
+        padding: 0;
+        background-color: #000;
+    }
+
+    /* Main container that centers everything */
+    .game-centerer {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        width: 100%;
+    }
+
+    /* Container that holds the game with border */
+    .game-border {
+        border: 4px solid #333;
+        border-radius: 8px;
+        overflow: hidden; /* Ensures border contains everything */
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Game canvas styling */
+    canvas.emscripten {
+        display: block; /* Removes extra space around canvas */
+        background-color: #000;
+    }
+</style>
+<!-- <div class="center-rectangle"> -->
+
+<div class="game-wrapper">
+    <div class="game-container">
+
+
+        <html lang=EN-us>
+
+        <head>
+            <meta charset=utf-8>
+            <meta content="text/html; charset=utf-8" http-equiv=Content-Type>
+            <title>raylib web game</title>
+            <meta content="raylib web game" name=title>
+            <meta content="New raylib web videogame, developed using raylib videogames library" name=description>
+            <meta content="raylib, programming, examples, html5, C, C++, library, learn, games, videogames"
+                name=keywords>
+            <meta content="width=device-width" name=viewport>
+            <meta content=website property=og:type>
+            <meta content="raylib web game" property=og:title>
+            <meta content=image/png property=og:image:type>
+            <meta content=https://www.raylib.com/common/raylib_logo.png property=og:image>
+            <meta content="New raylib web videogame, developed using raylib videogames library" property=og:image:alt>
+            <meta content="raylib - example" property=og:site_name>
+            <meta content=https://www.raylib.com/games.html property=og:url>
+            <meta content="New raylib web videogame, developed using raylib videogames library" property=og:description>
+            <meta content=summary_large_image name=twitter:card>
+            <meta content=@raysan5 name=twitter:site>
+            <meta content="raylib web game" name=twitter:title>
+            <meta content=https://www.raylib.com/common/raylib_logo.png name=twitter:image>
+            <meta content="New raylib web videogame, developed using raylib videogames library" name=twitter:image:alt>
+            <meta content=https://www.raylib.com/games.html name=twitter:url>
+            <meta content="New raylib web videogame, developed using raylib videogames library"
+                name=twitter:description>
+            <link href=https://www.raylib.com/favicon.ico rel="shortcut icon">
+            <style>
+                body {
+                    margin: 0;
+                    overflow: hidden;
+                    background-color: #000
+                }
+
+                canvas.emscripten {
+                    border: 0 none;
+                    background-color: #000
+                }
+            </style>
+            <script src=https://cdn.jsdelivr.net/gh/eligrey/FileSaver.js/dist/FileSaver.min.js></script>
+            <script>function saveFileFromMEMFSToDisk(e, a) { var i, o = FS.readFile(e); i = new Blob([o.buffer], { type: "application/octet-binary" }), saveAs(i, a) }</script>
+        </head>
+
+        <body><canvas class=emscripten id=canvas oncontextmenu=event.preventDefault() tabindex=-1></canvas>
+            <p id=output>
+                <script>var Module = { print: function () { var e = document.getElementById("output"); return e && (e.value = ""), function (n) { arguments.length > 1 && (n = Array.prototype.slice.call(arguments).join(" ")), console.log(n), e && (e.value += n + "\n", e.scrollTop = e.scrollHeight) } }(), canvas: document.getElementById("canvas") }</script>
+                <script src=index.js async></script>
+        </body>
+
+        </html>
+
+        </div>
+</div>
+            </div>
+        </article></main>
 </div>
 <footer class="footer">
     <span class="footer_item"> </span>
@@ -211,3 +355,8 @@ stroke-linejoin="round" class="feather feather-home">
 
 </body>
 </html>
+
+
+
+## The math 
+

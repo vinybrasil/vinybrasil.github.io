@@ -6,7 +6,118 @@
     <description>Recent content in Posts on Viny Brasil&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Mon, 28 Apr 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/posts/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Thu, 15 May 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Day trading Simulator</title>
+      <link>http://localhost:1313/posts/game/</link>
+      <pubDate>Thu, 15 May 2025 00:00:00 +0000</pubDate>
+      
+      <guid>http://localhost:1313/posts/game/</guid>
+      
+      <description>&lt;style&gt;
+    /* Remove default margins and padding */
+    body {
+        margin: 0;
+        padding: 0;
+        background-color: #000;
+    }
+
+    /* Main container that centers everything */
+    .game-centerer {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        width: 100%;
+    }
+
+    /* Container that holds the game with border */
+    .game-border {
+        border: 4px solid #333;
+        border-radius: 8px;
+        overflow: hidden;
+        /* Ensures border contains everything */
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Game canvas styling */
+    canvas.emscripten {
+        display: block;
+        /* Removes extra space around canvas */
+        background-color: #000;
+    }
+&lt;/style&gt;
+&lt;!-- &lt;div class=&#34;center-rectangle&#34;&gt; --&gt;
+
+&lt;div class=&#34;game-wrapper&#34;&gt;
+    &lt;div class=&#34;game-container&#34;&gt;
+
+
+        &lt;html lang=EN-us&gt;
+
+        &lt;head&gt;
+            &lt;meta charset=utf-8&gt;
+            &lt;meta content=&#34;text/html; charset=utf-8&#34; http-equiv=Content-Type&gt;
+            &lt;title&gt;raylib web game&lt;/title&gt;
+            &lt;meta content=&#34;raylib web game&#34; name=title&gt;
+            &lt;meta content=&#34;New raylib web videogame, developed using raylib videogames library&#34; name=description&gt;
+            &lt;meta content=&#34;raylib, programming, examples, html5, C, C++, library, learn, games, videogames&#34;
+                name=keywords&gt;
+            &lt;meta content=&#34;width=device-width&#34; name=viewport&gt;
+            &lt;meta content=website property=og:type&gt;
+            &lt;meta content=&#34;raylib web game&#34; property=og:title&gt;
+            &lt;meta content=image/png property=og:image:type&gt;
+            &lt;meta content=https://www.raylib.com/common/raylib_logo.png property=og:image&gt;
+            &lt;meta content=&#34;New raylib web videogame, developed using raylib videogames library&#34; property=og:image:alt&gt;
+            &lt;meta content=&#34;raylib - example&#34; property=og:site_name&gt;
+            &lt;meta content=https://www.raylib.com/games.html property=og:url&gt;
+            &lt;meta content=&#34;New raylib web videogame, developed using raylib videogames library&#34; property=og:description&gt;
+            &lt;meta content=summary_large_image name=twitter:card&gt;
+            &lt;meta content=@raysan5 name=twitter:site&gt;
+            &lt;meta content=&#34;raylib web game&#34; name=twitter:title&gt;
+            &lt;meta content=https://www.raylib.com/common/raylib_logo.png name=twitter:image&gt;
+            &lt;meta content=&#34;New raylib web videogame, developed using raylib videogames library&#34; name=twitter:image:alt&gt;
+            &lt;meta content=https://www.raylib.com/games.html name=twitter:url&gt;
+            &lt;meta content=&#34;New raylib web videogame, developed using raylib videogames library&#34;
+                name=twitter:description&gt;
+            &lt;link href=https://www.raylib.com/favicon.ico rel=&#34;shortcut icon&#34;&gt;
+            &lt;style&gt;
+                body {
+                    margin: 0;
+                    overflow: hidden;
+                    background-color: #000
+                }
+
+                canvas.emscripten {
+                    border: 0 none;
+                    background-color: #000
+                }
+            &lt;/style&gt;
+            &lt;script src=https://cdn.jsdelivr.net/gh/eligrey/FileSaver.js/dist/FileSaver.min.js&gt;&lt;/script&gt;
+            &lt;script&gt;function saveFileFromMEMFSToDisk(e, a) { var i, o = FS.readFile(e); i = new Blob([o.buffer], { type: &#34;application/octet-binary&#34; }), saveAs(i, a) }&lt;/script&gt;
+        &lt;/head&gt;
+
+        &lt;script async src=&#34;https://www.googletagmanager.com/gtag/js?id=G-Y0TCWKTPYJ&#34;&gt;&lt;/script&gt;
+
+
+        &lt;body&gt;&lt;canvas class=emscripten id=canvas oncontextmenu=event.preventDefault() tabindex=-1&gt;&lt;/canvas&gt;
+            &lt;p id=output&gt;
+                &lt;script&gt;var Module = { print: function () { var e = document.getElementById(&#34;output&#34;); return e &amp;&amp; (e.value = &#34;&#34;), function (n) { arguments.length &gt; 1 &amp;&amp; (n = Array.prototype.slice.call(arguments).join(&#34; &#34;)), console.log(n), e &amp;&amp; (e.value += n + &#34;\n&#34;, e.scrollTop = e.scrollHeight) } }(), canvas: document.getElementById(&#34;canvas&#34;) }&lt;/script&gt;
+                &lt;script src=index.js async&gt;&lt;/script&gt;
+        &lt;/body&gt;
+
+        &lt;/html&gt;
+
+    &lt;/div&gt;
+&lt;/div&gt;
+
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p id=&#34;Description&#34;&gt;A simple game built with Raylib and WASM that simulates the intraday price of a stock.
+    The player can buy the asset (will gain if the price goes up) or sell it (will gain if the price goes down). &lt;/p&gt;</description>
+      
+    </item>
+    
     <item>
       <title>Optimizing Python with Zig for numerical calculations</title>
       <link>http://localhost:1313/posts/zig-python-runge-kutta/</link>
