@@ -2,16 +2,16 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Pages on Viny Brasil&#39;s blog</title>
-    <link>vinybrasil.github.io/pages/</link>
+    <link>https://vinybrasil.github.io/pages/</link>
     <description>Recent content in Pages on Viny Brasil&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language><atom:link href="vinybrasil.github.io/pages/index.xml" rel="self" type="application/rss+xml" />
+    <language>en-us</language><atom:link href="https://vinybrasil.github.io/pages/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>About me</title>
-      <link>vinybrasil.github.io/pages/about/</link>
+      <link>https://vinybrasil.github.io/pages/about/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>vinybrasil.github.io/pages/about/</guid>
+      <guid>https://vinybrasil.github.io/pages/about/</guid>
       
       <description>&lt;h1&gt;Work &lt;/h1&gt; 
 &lt;p&gt;I&amp;rsquo;m a Machine Learning Engineer working for over four years in the industry using machine learning in scalable systems to add value and solve business problems.&lt;/p&gt;
@@ -23,10 +23,10 @@
     
     <item>
       <title>My Youtube videos</title>
-      <link>vinybrasil.github.io/pages/videos/</link>
+      <link>https://vinybrasil.github.io/pages/videos/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>vinybrasil.github.io/pages/videos/</guid>
+      <guid>https://vinybrasil.github.io/pages/videos/</guid>
       
       <description>&lt;hr style=&#34;height:2px;border-width:0;color:gray;background-color:gray&#34;&gt; 
 &lt;h2&gt;Why you will lose money with sports betting (mathematically) [video in portuguese] &lt;/h2&gt; 
