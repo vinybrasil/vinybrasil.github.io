@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Posts on Viny Brasil&#39;s blog</title>
-    <link>http://localhost:1313/posts/</link>
+    <link>vinybrasil.github.io/posts/</link>
     <description>Recent content in Posts on Viny Brasil&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 15 May 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/posts/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Thu, 15 May 2025 00:00:00 +0000</lastBuildDate><atom:link href="vinybrasil.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Day trading Simulator built with Raylib</title>
-      <link>http://localhost:1313/posts/game/</link>
+      <link>vinybrasil.github.io/posts/game/</link>
       <pubDate>Thu, 15 May 2025 00:00:00 +0000</pubDate>
       
-      <guid>http://localhost:1313/posts/game/</guid>
+      <guid>vinybrasil.github.io/posts/game/</guid>
       
       <description>&lt;style&gt;
     /* Remove default margins and padding */
@@ -55,10 +55,10 @@
     
     <item>
       <title>Optimizing Python with Zig for numerical calculations</title>
-      <link>http://localhost:1313/posts/zig-python-runge-kutta/</link>
+      <link>vinybrasil.github.io/posts/zig-python-runge-kutta/</link>
       <pubDate>Mon, 28 Apr 2025 00:00:00 +0000</pubDate>
       
-      <guid>http://localhost:1313/posts/zig-python-runge-kutta/</guid>
+      <guid>vinybrasil.github.io/posts/zig-python-runge-kutta/</guid>
       
       <description>&lt;h2 id=&#34;introduction&#34;&gt;Introduction&lt;/h2&gt;
 &lt;p&gt;As a interpreted language, Python is known for being slower than compiled languages when running almost all processes including numerical calculations. It&amp;rsquo;s a trade-off actually, since writing
@@ -70,10 +70,10 @@ normally faster than just pure Python.&lt;/p&gt;</description>
     
     <item>
       <title>Caching API responses with Redis in Zig</title>
-      <link>http://localhost:1313/posts/cache-zig-redis/</link>
+      <link>vinybrasil.github.io/posts/cache-zig-redis/</link>
       <pubDate>Tue, 11 Mar 2025 00:00:00 +0000</pubDate>
       
-      <guid>http://localhost:1313/posts/cache-zig-redis/</guid>
+      <guid>vinybrasil.github.io/posts/cache-zig-redis/</guid>
       
       <description>&lt;h2 id=&#34;introduction&#34;&gt;Introduction&lt;/h2&gt;
 &lt;p&gt;When fetching a database, our server must perform a READ operation. Every transation has a cost of time and money (computational cost in the cloud). One way of reducing this cost it&amp;rsquo;s
@@ -85,10 +85,10 @@ webframework written in Zig.&lt;/p&gt;</description>
     
     <item>
       <title>Running sklearn models in Zig</title>
-      <link>http://localhost:1313/posts/zig-sklearn/</link>
+      <link>vinybrasil.github.io/posts/zig-sklearn/</link>
       <pubDate>Thu, 06 Feb 2025 00:00:00 +0000</pubDate>
       
-      <guid>http://localhost:1313/posts/zig-sklearn/</guid>
+      <guid>vinybrasil.github.io/posts/zig-sklearn/</guid>
       
       <description>&lt;h2 id=&#34;introduction&#34;&gt;Introduction&lt;/h2&gt;
 &lt;p&gt;Scikit-learn models became the industry standard for creating machine learning models.
@@ -99,10 +99,10 @@ To overcome this limitation, one solution is to use Python&amp;rsquo;s C library
     
     <item>
       <title>Building a real-time Websocket webapp with Kafka and Javascript</title>
-      <link>http://localhost:1313/posts/websockets-kafka/</link>
+      <link>vinybrasil.github.io/posts/websockets-kafka/</link>
       <pubDate>Mon, 06 Jan 2025 00:00:00 +0000</pubDate>
       
-      <guid>http://localhost:1313/posts/websockets-kafka/</guid>
+      <guid>vinybrasil.github.io/posts/websockets-kafka/</guid>
       
       <description>&lt;h2 id=&#34;introduction&#34;&gt;Introduction&lt;/h2&gt;
 &lt;p&gt;Suppose we have a API that generates a lot of information whom we must store in a database and show them to clients. This information updates every few seconds
@@ -115,10 +115,10 @@ and this sort of system is call a real-time app (in reality, it takes some secon
     
     <item>
       <title>Convert decimal odds to probabilities with Zig</title>
-      <link>http://localhost:1313/posts/zigodd/</link>
+      <link>vinybrasil.github.io/posts/zigodd/</link>
       <pubDate>Mon, 30 Dec 2024 00:00:00 +0000</pubDate>
       
-      <guid>http://localhost:1313/posts/zigodd/</guid>
+      <guid>vinybrasil.github.io/posts/zigodd/</guid>
       
       <description>&lt;p&gt;A Zig program for conversion and payout calculation&lt;/p&gt;
 &lt;h2 id=&#34;introduction&#34;&gt;Introduction&lt;/h2&gt;
@@ -133,10 +133,10 @@ implementation. If you only need the code you can go directly to my &lt;a href=&
     
     <item>
       <title>Trigger a AWS Lambda with a SQS message with Python</title>
-      <link>http://localhost:1313/posts/sqs-lambda/</link>
+      <link>vinybrasil.github.io/posts/sqs-lambda/</link>
       <pubDate>Sat, 03 Dec 2022 00:00:00 +0000</pubDate>
       
-      <guid>http://localhost:1313/posts/sqs-lambda/</guid>
+      <guid>vinybrasil.github.io/posts/sqs-lambda/</guid>
       
       <description>&lt;h2 id=&#34;introduction&#34;&gt;Introduction&lt;/h2&gt;
 &lt;p&gt;In the context of microservices, the communication of them must be fast and realiabe. This communication can be through messages and a tool for this communication can be SQS (Simple Queue Service), a messaging service by AWS.&lt;/p&gt;
@@ -146,10 +146,10 @@ implementation. If you only need the code you can go directly to my &lt;a href=&
     
     <item>
       <title>Deploying a classification model on AWS Lambda with Docker and FastAPI</title>
-      <link>http://localhost:1313/posts/classification-model/</link>
+      <link>vinybrasil.github.io/posts/classification-model/</link>
       <pubDate>Wed, 31 Aug 2022 00:00:00 +0000</pubDate>
       
-      <guid>http://localhost:1313/posts/classification-model/</guid>
+      <guid>vinybrasil.github.io/posts/classification-model/</guid>
       
       <description>&lt;p&gt;Does the user inserted the correct picture when the app requested? That&amp;rsquo;s a pretty common problem companies faces when creating a onboarding process of a app or a web service. For example, during the onboarding process of a bank the app can ask for a selfie and the user insert a picture of it&amp;rsquo;s ID. Since in those kind of processes there&amp;rsquo;s a huge amount of requests at the same time, a manual validation process can&amp;rsquo;t be used and a machine learning model can be a good alternative. TensorFlow and FastAPI can be used to create that solution.&lt;/p&gt;</description>
       
@@ -157,10 +157,10 @@ implementation. If you only need the code you can go directly to my &lt;a href=&
     
     <item>
       <title>An asynchronous Consumer and Producer API for Kafka with FastAPI in Python</title>
-      <link>http://localhost:1313/posts/kafka-python-consumer-producer/</link>
+      <link>vinybrasil.github.io/posts/kafka-python-consumer-producer/</link>
       <pubDate>Mon, 27 Jun 2022 00:00:00 +0000</pubDate>
       
-      <guid>http://localhost:1313/posts/kafka-python-consumer-producer/</guid>
+      <guid>vinybrasil.github.io/posts/kafka-python-consumer-producer/</guid>
       
       <description>&lt;p&gt;Writing asynchronous code it&amp;rsquo;s worth the effort when you&amp;rsquo;re dealing with a high load or multiple microservices that can take some time to answer your calls. The purpose of this article is to create an simple asynchronous API that works the same time as a Kafka&amp;rsquo;s producer and consumer. The full project it&amp;rsquo;s on my &lt;a href=&#34;https://github.com/vinybrasil/fastapi_kafka&#34;&gt;Github&lt;/a&gt;.&lt;/p&gt;
 &lt;h3 id=&#34;setting-up-kafka&#34;&gt;Setting up Kafka&lt;/h3&gt;

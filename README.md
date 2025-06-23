@@ -1,7 +1,7 @@
 to build this website locally:
 
 ```
-hugo build -d docs/
+hugo build -b vinybrasil.github.io -d docs/
 ```
 
 to run locally:
